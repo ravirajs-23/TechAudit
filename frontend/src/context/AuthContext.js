@@ -21,7 +21,7 @@ const initialState = {
   user: null,
   token: localStorage.getItem('token'),
   isAuthenticated: false,
-  loading: false,
+  loading: true, // Start with loading true
   error: null,
 };
 
@@ -98,66 +98,152 @@ export const AuthProvider = ({ children }) => {
   // Set auth token header
   useEffect(() => {
     if (state.token) {
+      console.log('🔑 AuthContext: Setting Authorization header with token');
       api.defaults.headers.common['Authorization'] = `Bearer ${state.token}`;
+      // Store token in localStorage
       localStorage.setItem('token', state.token);
     } else {
+      console.log('🔑 AuthContext: Removing Authorization header');
       delete api.defaults.headers.common['Authorization'];
+      // Remove token from localStorage
       localStorage.removeItem('token');
     }
   }, [state.token]);
+
+  // Test API connection
+  useEffect(() => {
+    const testConnection = async () => {
+      try {
+        console.log('🧪 Testing API connection...');
+        const response = await api.get('/health');
+        console.log('✅ API connection successful:', response.data);
+      } catch (error) {
+        console.error('❌ API connection failed:', error);
+      }
+    };
+    
+    testConnection();
+  }, []);
+
+  // Check for stored token on app startup
+  useEffect(() => {
+    const storedToken = localStorage.getItem('token');
+    if (storedToken && !state.token) {
+      console.log('🔍 AuthContext: Found stored token, restoring session...');
+      dispatch({
+        type: AUTH_ACTIONS.LOGIN_SUCCESS,
+        payload: { token: storedToken, user: null }
+      });
+    } else if (!storedToken) {
+      // No stored token, set loading to false
+      dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
+    }
+  }, []);
 
   // Load user on mount if token exists
   useEffect(() => {
     if (state.token && !state.user) {
       loadUser();
+    } else if (state.token && state.user) {
+      // User already loaded, set loading to false
+      dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
+    } else if (!state.token) {
+      // No token, set loading to false
+      dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
     }
-  }, [state.token]);
+  }, [state.token, state.user]);
 
   // Load user from API
   const loadUser = async () => {
     try {
+      console.log('🔍 AuthContext: Loading user data...');
       const response = await api.get('/api/auth/me');
       if (response.data.success) {
+        console.log('✅ AuthContext: User data loaded successfully:', response.data.user);
         dispatch({
           type: AUTH_ACTIONS.LOAD_USER,
           payload: response.data.user,
         });
+      } else {
+        console.log('❌ AuthContext: Failed to load user - API returned success: false');
+        logout();
       }
     } catch (error) {
-      console.error('Failed to load user:', error);
-      logout();
+      console.error('❌ AuthContext: Failed to load user:', error);
+      if (error.response?.status === 401) {
+        console.log('🔒 AuthContext: Token expired or invalid, logging out...');
+        logout();
+      } else {
+        // Other errors, set loading to false but keep token
+        dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
+      }
     }
   };
 
   // Login user
   const login = async (email, password) => {
     try {
+      console.log('🔐 AuthContext: Starting login process...');
       dispatch({ type: AUTH_ACTIONS.LOGIN_START });
       
+      console.log('🌐 AuthContext: Making API call to /api/auth/login...');
       const response = await api.post('/api/auth/login', { email, password });
       
+      console.log('📡 AuthContext: API response received:', response.data);
+      
       if (response.data.success) {
+        const { user, token } = response.data;
+        
+        console.log('✅ AuthContext: Login successful, storing token and user data...');
+        console.log('👤 User:', user);
+        console.log('🔑 Token:', token ? `${token.substring(0, 20)}...` : 'No token');
+        
+        // Store token in localStorage
+        localStorage.setItem('token', token);
+        
         dispatch({
           type: AUTH_ACTIONS.LOGIN_SUCCESS,
           payload: response.data,
         });
         
+        console.log('🎯 AuthContext: Dispatching LOGIN_SUCCESS, navigating to dashboard...');
         toast.success('Login successful!');
         navigate('/dashboard');
       } else {
+        console.log('❌ AuthContext: Login failed - API returned success: false');
+        const errorMessage = response.data.error || 'Login failed';
         dispatch({
           type: AUTH_ACTIONS.LOGIN_FAILURE,
-          payload: response.data.error,
+          payload: errorMessage,
         });
-        toast.error(response.data.error);
+        toast.error(errorMessage);
+        throw new Error(errorMessage);
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.error || 'Login failed';
+      console.error('💥 AuthContext: Login error caught:', error);
+      
+      let errorMessage = 'Login failed';
+      
+      if (error.response) {
+        // Server responded with error status
+        console.log('📡 AuthContext: Server error response:', error.response);
+        errorMessage = error.response.data?.error || `Server error: ${error.response.status}`;
+      } else if (error.request) {
+        // Request was made but no response received
+        console.log('🌐 AuthContext: Network error - no response received');
+        errorMessage = 'Network error - please check your connection';
+      } else {
+        // Something else happened
+        console.log('❓ AuthContext: Other error:', error.message);
+        errorMessage = error.message || 'Login failed';
+      }
+      
       dispatch({
         type: AUTH_ACTIONS.LOGIN_FAILURE,
         payload: errorMessage,
       });
       toast.error(errorMessage);
+      throw new Error(errorMessage);
     }
   };
 

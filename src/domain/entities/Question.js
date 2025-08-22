@@ -1,69 +1,100 @@
 class Question {
-  constructor(id, sectionId, text, guidance = '', evidenceRequired = '', weight = 1, order = 1, createdAt = new Date()) {
+  constructor(id, text, guidance, evidenceRequired, createdAt = null, updatedAt = null) {
     this.id = id;
-    this.sectionId = sectionId;
     this.text = text;
     this.guidance = guidance;
     this.evidenceRequired = evidenceRequired;
-    this.weight = weight;
-    this.order = order;
     this.createdAt = createdAt;
+    this.updatedAt = updatedAt;
   }
 
-  get maxScore() {
-    return this.weight * 2; // Maximum score is 2 points (Compliant)
-  }
-
-  get weightedScore() {
-    return this.weight * 100; // Convert to percentage
-  }
-
-  isFirstQuestion() {
-    return this.order === 1;
-  }
-
-  moveUp() {
-    if (this.order > 1) {
-      this.order--;
-    }
-  }
-
-  moveDown() {
-    this.order++;
-  }
-
+  /**
+   * Validate question data
+   * @returns {string[]} Array of validation errors
+   */
   validate() {
     const errors = [];
-    
-    if (!this.sectionId) {
-      errors.push('Section ID is required');
-    }
-    
+
     if (!this.text || this.text.trim().length === 0) {
       errors.push('Question text is required');
     }
-    
-    if (this.text && this.text.length > 500) {
-      errors.push('Question text cannot exceed 500 characters');
+
+    if (this.text && this.text.length > 1000) {
+      errors.push('Question text cannot exceed 1000 characters');
     }
-    
-    if (this.guidance && this.guidance.length > 1000) {
-      errors.push('Question guidance cannot exceed 1000 characters');
+
+    if (!this.evidenceRequired) {
+      errors.push('Evidence requirement is required');
     }
-    
-    if (this.evidenceRequired && this.evidenceRequired.length > 500) {
-      errors.push('Evidence requirement cannot exceed 500 characters');
+
+    if (this.evidenceRequired && !['Yes', 'No', 'Optional'].includes(this.evidenceRequired)) {
+      errors.push('Evidence required must be one of: Yes, No, Optional');
     }
-    
-    if (this.weight < 0 || this.weight > 10) {
-      errors.push('Question weight must be between 0 and 10');
+
+    if (this.guidance && this.guidance.length > 2000) {
+      errors.push('Guidance cannot exceed 2000 characters');
     }
-    
-    if (this.order < 1) {
-      errors.push('Question order must be at least 1');
-    }
-    
+
     return errors;
+  }
+
+  /**
+   * Check if evidence is required
+   * @returns {boolean}
+   */
+  isEvidenceRequired() {
+    return this.evidenceRequired === 'Yes';
+  }
+
+  /**
+   * Check if evidence is optional
+   * @returns {boolean}
+   */
+  isEvidenceOptional() {
+    return this.evidenceRequired === 'Optional';
+  }
+
+  /**
+   * Check if no evidence is needed
+   * @returns {boolean}
+   */
+  isNoEvidenceNeeded() {
+    return this.evidenceRequired === 'No';
+  }
+
+  /**
+   * Get question summary
+   * @returns {string}
+   */
+  getSummary() {
+    const text = this.text.length > 100 ? this.text.substring(0, 100) + '...' : this.text;
+    return `${text} [Evidence: ${this.evidenceRequired}]`;
+  }
+
+  /**
+   * Update question data
+   * @param {Object} updateData
+   */
+  update(updateData) {
+    if (updateData.text !== undefined) this.text = updateData.text;
+    if (updateData.guidance !== undefined) this.guidance = updateData.guidance;
+    if (updateData.evidenceRequired !== undefined) this.evidenceRequired = updateData.evidenceRequired;
+    this.updatedAt = new Date().toISOString();
+  }
+
+  /**
+   * Convert to plain object
+   * @returns {Object}
+   */
+  toJSON() {
+    return {
+      id: this.id,
+      text: this.text,
+      guidance: this.guidance,
+      evidenceRequired: this.evidenceRequired,
+      createdAt: this.createdAt,
+      updatedAt: this.updatedAt
+    };
   }
 }
 

@@ -1,115 +1,187 @@
 import React, { useState } from 'react';
-import { Outlet } from 'react-router-dom';
 import {
-  Box,
   AppBar,
+  Box,
   Toolbar,
-  Typography,
   IconButton,
+  Typography,
+  Menu,
+  MenuItem,
+  Avatar,
+  Button,
   Drawer,
   List,
   ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
-  ListItemButton,
   Divider,
-  Avatar,
-  Menu,
-  MenuItem,
+  Container,
+  Badge,
   Tooltip,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
   Dashboard as DashboardIcon,
   Assessment as AssessmentIcon,
-  People as PeopleIcon,
+  QuestionAnswer as QuestionIcon,
+  ViewList as SectionIcon,
+  Build as BuildIcon,
+  Computer as TechnologyIcon,
+  Person as PersonIcon,
   Settings as SettingsIcon,
-  AccountCircle,
-  Logout,
+  Notifications as NotificationsIcon,
+  Logout as LogoutIcon,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
 } from '@mui/icons-material';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const drawerWidth = 240;
 
-const Layout = () => {
-  const { user, logout, isAdmin } = useAuth();
+const Layout = ({ children }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const { user, logout, isAdmin } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
 
-  const handleProfileMenuOpen = (event) => {
+  const handleUserMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
+    setUserMenuOpen(true);
   };
 
-  const handleProfileMenuClose = () => {
+  const handleUserMenuClose = () => {
     setAnchorEl(null);
+    setUserMenuOpen(false);
   };
 
-  const handleLogout = () => {
-    logout();
-    handleProfileMenuClose();
+  const handleLogout = async () => {
+    await logout();
+    handleUserMenuClose();
   };
 
-  const menuItems = [
+  const navigationItems = [
     {
       text: 'Dashboard',
       icon: <DashboardIcon />,
       path: '/dashboard',
+      badge: null,
+    },
+    {
+      text: 'Questionnaire Builder',
+      icon: <BuildIcon />,
+      path: '/builder',
+      badge: null,
+    },
+    {
+      text: 'Questions',
+      icon: <QuestionIcon />,
+      path: '/questions',
+      badge: null,
+    },
+    {
+      text: 'Sections',
+      icon: <SectionIcon />,
+      path: '/sections',
+      badge: null,
+    },
+    {
+      text: 'Technologies',
+      icon: <TechnologyIcon />,
+      path: '/technologies',
+      badge: null,
     },
     {
       text: 'Audits',
       icon: <AssessmentIcon />,
       path: '/audits',
-    },
-    {
-      text: 'Users',
-      icon: <PeopleIcon />,
-      path: '/users',
-      adminOnly: true,
-    },
-    {
-      text: 'Settings',
-      icon: <SettingsIcon />,
-      path: '/settings',
-      adminOnly: true,
+      badge: '3',
     },
   ];
 
   const drawer = (
     <Box>
-      <Toolbar>
-        <Typography variant="h6" noWrap component="div">
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          p: 2,
+          borderBottom: 1,
+          borderColor: 'divider',
+        }}
+      >
+        <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold' }}>
           Tech Audit
         </Typography>
-      </Toolbar>
+      </Box>
       <Divider />
       <List>
-        {menuItems.map((item) => {
-          if (item.adminOnly && !isAdmin()) return null;
-          
-          return (
-            <ListItem key={item.text} disablePadding>
-              <ListItemButton>
-                <ListItemIcon>{item.icon}</ListItemIcon>
-                <ListItemText primary={item.text} />
-              </ListItemButton>
-            </ListItem>
-          );
-        })}
+        {navigationItems.map((item) => (
+          <ListItem key={item.text} disablePadding>
+            <ListItemButton
+              onClick={() => navigate(item.path)}
+              selected={location.pathname === item.path}
+              sx={{
+                '&.Mui-selected': {
+                  backgroundColor: 'primary.main',
+                  color: 'white',
+                  '&:hover': {
+                    backgroundColor: 'primary.dark',
+                  },
+                  '& .MuiListItemIcon-root': {
+                    color: 'white',
+                  },
+                },
+              }}
+            >
+              <ListItemIcon>{item.icon}</ListItemIcon>
+              <ListItemText primary={item.text} />
+              {item.badge && (
+                <Badge badgeContent={item.badge} color="error" />
+              )}
+            </ListItemButton>
+          </ListItem>
+        ))}
+      </List>
+      <Divider />
+      <List>
+        <ListItem disablePadding>
+          <ListItemButton onClick={() => navigate('/profile')}>
+            <ListItemIcon>
+              <PersonIcon />
+            </ListItemIcon>
+            <ListItemText primary="Profile" />
+          </ListItemButton>
+        </ListItem>
+        <ListItem disablePadding>
+          <ListItemButton onClick={() => navigate('/settings')}>
+            <ListItemIcon>
+              <SettingsIcon />
+            </ListItemIcon>
+            <ListItemText primary="Settings" />
+          </ListItemButton>
+        </ListItem>
       </List>
     </Box>
   );
 
   return (
     <Box sx={{ display: 'flex' }}>
+      {/* App Bar */}
       <AppBar
         position="fixed"
         sx={{
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           ml: { sm: `${drawerWidth}px` },
+          zIndex: (theme) => theme.zIndex.drawer + 1,
         }}
       >
         <Toolbar>
@@ -124,33 +196,79 @@ const Layout = () => {
           </IconButton>
           
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            Tech Audit Management System
+            {navigationItems.find(item => item.path === location.pathname)?.text || 'Tech Audit'}
           </Typography>
 
+          {/* Notifications */}
+          <Tooltip title="Notifications">
+            <IconButton color="inherit" sx={{ mr: 1 }}>
+              <Badge badgeContent={4} color="error">
+                <NotificationsIcon />
+              </Badge>
+            </IconButton>
+          </Tooltip>
+
+          {/* User Menu */}
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Typography variant="body2" sx={{ mr: 2 }}>
+            <Typography variant="body2" sx={{ mr: 2, display: { xs: 'none', sm: 'block' } }}>
               {user?.firstName} {user?.lastName}
             </Typography>
-            
             <Tooltip title="Account settings">
               <IconButton
-                onClick={handleProfileMenuOpen}
+                onClick={handleUserMenuOpen}
+                size="small"
                 sx={{ ml: 1 }}
-                color="inherit"
+                aria-controls={userMenuOpen ? 'account-menu' : undefined}
+                aria-haspopup="true"
+                aria-expanded={userMenuOpen ? 'true' : undefined}
               >
-                <Avatar sx={{ width: 32, height: 32 }}>
-                  <AccountCircle />
+                <Avatar sx={{ width: 32, height: 32, bgcolor: 'secondary.main' }}>
+                  {user?.firstName?.charAt(0) || user?.email?.charAt(0) || 'U'}
                 </Avatar>
               </IconButton>
             </Tooltip>
           </Box>
+
+          {/* User Menu Dropdown */}
+          <Menu
+            anchorEl={anchorEl}
+            id="account-menu"
+            open={userMenuOpen}
+            onClose={handleUserMenuClose}
+            onClick={handleUserMenuClose}
+            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+          >
+            <MenuItem onClick={() => navigate('/profile')}>
+              <ListItemIcon>
+                <PersonIcon fontSize="small" />
+              </ListItemIcon>
+              Profile
+            </MenuItem>
+            <MenuItem onClick={() => navigate('/settings')}>
+              <ListItemIcon>
+                <SettingsIcon fontSize="small" />
+              </ListItemIcon>
+              Settings
+            </MenuItem>
+            <Divider />
+            <MenuItem onClick={handleLogout}>
+              <ListItemIcon>
+                <LogoutIcon fontSize="small" />
+              </ListItemIcon>
+              Logout
+            </MenuItem>
+          </Menu>
         </Toolbar>
       </AppBar>
 
+      {/* Sidebar */}
       <Box
         component="nav"
         sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
+        aria-label="mailbox folders"
       >
+        {/* Mobile drawer */}
         <Drawer
           variant="temporary"
           open={mobileOpen}
@@ -165,6 +283,8 @@ const Layout = () => {
         >
           {drawer}
         </Drawer>
+        
+        {/* Desktop drawer */}
         <Drawer
           variant="permanent"
           sx={{
@@ -177,41 +297,20 @@ const Layout = () => {
         </Drawer>
       </Box>
 
+      {/* Main content */}
       <Box
         component="main"
         sx={{
           flexGrow: 1,
           p: 3,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
+          mt: 8,
         }}
       >
-        <Toolbar />
-        <Outlet />
+        <Container maxWidth="xl">
+          {children}
+        </Container>
       </Box>
-
-      {/* Profile Menu */}
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleProfileMenuClose}
-        onClick={handleProfileMenuClose}
-        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-      >
-        <MenuItem onClick={handleProfileMenuClose}>
-          <ListItemIcon>
-            <AccountCircle fontSize="small" />
-          </ListItemIcon>
-          Profile
-        </MenuItem>
-        <Divider />
-        <MenuItem onClick={handleLogout}>
-          <ListItemIcon>
-            <Logout fontSize="small" />
-          </ListItemIcon>
-          Logout
-        </MenuItem>
-      </Menu>
     </Box>
   );
 };
