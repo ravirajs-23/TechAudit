@@ -8,7 +8,9 @@ import Dashboard from './pages/Dashboard/Dashboard';
 import QuestionnaireBuilder from './components/QuestionnaireBuilder/QuestionnaireBuilder';
 import Questions from './pages/Questions/Questions';
 import Sections from './pages/Sections/Sections';
+import CreateSection from './pages/Sections/CreateSection';
 import Technologies from './pages/Technologies/Technologies';
+import CreateTechnology from './pages/Technologies/CreateTechnology';
 import './index.css';
 import Layout from './components/Layout/Layout';
 
@@ -49,73 +51,89 @@ function App() {
             {/* Public routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            
+
             {/* Protected routes */}
-            <Route 
-              path="/dashboard" 
+            <Route
+              path="/dashboard"
               element={
                 <ProtectedRoute>
                   <Dashboard />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/builder" 
+            <Route
+              path="/builder"
               element={
                 <ProtectedRoute>
                   <QuestionnaireBuilder />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/questions" 
+            <Route
+              path="/questions"
               element={
                 <ProtectedRoute>
                   <Questions />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/sections" 
+            <Route
+              path="/sections"
               element={
                 <ProtectedRoute>
                   <Sections />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/technologies" 
+            <Route
+              path="/sections/create"
+              element={
+                <ProtectedRoute>
+                  <CreateSection />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/technologies"
               element={
                 <ProtectedRoute>
                   <Technologies />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/audits" 
+            <Route
+              path="/technologies/create"
+              element={
+                <ProtectedRoute>
+                  <CreateTechnology />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/audits"
               element={
                 <ProtectedRoute>
                   <Audits />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/profile" 
+            <Route
+              path="/profile"
               element={
                 <ProtectedRoute>
                   <Profile />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/settings" 
+            <Route
+              path="/settings"
               element={
                 <ProtectedRoute>
                   <Settings />
                 </ProtectedRoute>
-              } 
+              }
             />
-            
+
             {/* Default redirect */}
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="*" element={<Navigate to="/login" replace />} />

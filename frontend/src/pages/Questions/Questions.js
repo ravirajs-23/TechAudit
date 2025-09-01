@@ -58,7 +58,6 @@ import {
   Refresh as RefreshIcon,
 } from '@mui/icons-material';
 import Layout from '../../components/Layout/Layout';
-import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
 const Questions = () => {
@@ -72,7 +71,7 @@ const Questions = () => {
   const [selectedPriority, setSelectedPriority] = useState('all');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -83,43 +82,150 @@ const Questions = () => {
     console.log('🔍 Current pathname:', window.location.pathname);
   }, [user, isAuthenticated, token]);
 
-  // API endpoints
-  const API_ENDPOINTS = {
-    questions: '/api/questions',
-    create: '/api/questions',
-    update: (id) => `/api/questions/${id}`,
-    delete: (id) => `/api/questions/${id}`,
-  };
+  // Import questions from shared data
+  // Note: In the future, this should be replaced with questionsData import
+  // For now keeping existing structure to avoid breaking changes
+  const staticQuestions = [
+    {
+      id: 1,
+      text: "Is a documented cybersecurity policy in place for the organization?",
+      guidance: "Review the written cybersecurity policy documentation and verify it is current and comprehensive.",
+      evidenceRequired: "document",
+      status: "active",
+      createdAt: "2024-01-15",
+      tags: ["security", "policy", "documentation"],
+      category: "Security",
+      priority: "High",
+      lastModified: "2024-01-20"
+    },
+    {
+      id: 2,
+      text: "Are regular security awareness training sessions conducted for all employees?",
+      guidance: "Check security training records, schedules, and attendance logs to verify compliance.",
+      evidenceRequired: "document",
+      status: "active",
+      createdAt: "2024-01-14",
+      tags: ["training", "security", "awareness"],
+      category: "Security",
+      priority: "High",
+      lastModified: "2024-01-18"
+    },
+    {
+      id: 3,
+      text: "Are database access controls properly configured and monitored?",
+      guidance: "Verify database user accounts, permissions, and access logging mechanisms are in place.",
+      evidenceRequired: "screenshot",
+      status: "active",
+      createdAt: "2024-01-13",
+      tags: ["database", "access-control", "monitoring"],
+      category: "Security",
+      priority: "Critical",
+      lastModified: "2024-01-19"
+    },
+    {
+      id: 4,
+      text: "Is the backup and recovery system tested regularly?",
+      guidance: "Review backup schedules, test results, and recovery procedures documentation.",
+      evidenceRequired: "document",
+      status: "active",
+      createdAt: "2024-01-12",
+      tags: ["backup", "recovery", "testing"],
+      category: "Backup",
+      priority: "High",
+      lastModified: "2024-01-17"
+    },
+    {
+      id: 5,
+      text: "Are system vulnerabilities scanned and patched in a timely manner?",
+      guidance: "Check vulnerability scanning reports and patch management procedures.",
+      evidenceRequired: "log",
+      status: "active",
+      createdAt: "2024-01-11",
+      tags: ["vulnerability", "patching", "scanning"],
+      category: "Maintenance",
+      priority: "Critical",
+      lastModified: "2024-01-16"
+    },
+    {
+      id: 6,
+      text: "Is multi-factor authentication implemented for administrative accounts?",
+      guidance: "Verify MFA configuration for all privileged and administrative user accounts.",
+      evidenceRequired: "screenshot",
+      status: "active",
+      createdAt: "2024-01-10",
+      tags: ["mfa", "authentication", "admin"],
+      category: "Authentication",
+      priority: "Critical",
+      lastModified: "2024-01-15"
+    },
+    {
+      id: 7,
+      text: "Are network traffic and system activities monitored continuously?",
+      guidance: "Review monitoring system configurations, alert settings, and log analysis procedures.",
+      evidenceRequired: "screenshot",
+      status: "active",
+      createdAt: "2024-01-09",
+      tags: ["monitoring", "network", "logging"],
+      category: "Monitoring",
+      priority: "Medium",
+      lastModified: "2024-01-14"
+    },
+    {
+      id: 8,
+      text: "Is data encryption applied to sensitive information at rest and in transit?",
+      guidance: "Verify encryption standards, key management, and data protection measures.",
+      evidenceRequired: "document",
+      status: "active",
+      createdAt: "2024-01-08",
+      tags: ["encryption", "data-protection", "compliance"],
+      category: "Compliance",
+      priority: "Critical",
+      lastModified: "2024-01-13"
+    },
+    {
+      id: 9,
+      text: "Are incident response procedures documented and regularly tested?",
+      guidance: "Review incident response plan, team roles, and recent drill exercises.",
+      evidenceRequired: "document",
+      status: "active",
+      createdAt: "2024-01-07",
+      tags: ["incident-response", "procedures", "testing"],
+      category: "Security",
+      priority: "High",
+      lastModified: "2024-01-12"
+    },
+    {
+      id: 10,
+      text: "Is access to production systems properly segregated and controlled?",
+      guidance: "Check production access controls, approval workflows, and segregation of duties.",
+      evidenceRequired: "observation",
+      status: "active",
+      createdAt: "2024-01-06",
+      tags: ["production", "access-control", "segregation"],
+      category: "Security",
+      priority: "High",
+      lastModified: "2024-01-11"
+    }
+  ];
 
   const categories = ['Security', 'Maintenance', 'Authentication', 'Backup', 'Monitoring', 'Compliance'];
   const priorities = ['Low', 'Medium', 'High', 'Critical'];
 
-  // Fetch questions from API
-  const fetchQuestions = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      console.log('🔍 Fetching questions from API...');
-      
-      const response = await api.get(API_ENDPOINTS.questions);
-      console.log('✅ Questions fetched successfully:', response.data);
-      
-      setQuestions(response.data.questions || response.data || []);
-      setFilteredQuestions(response.data.questions || response.data || []);
-    } catch (err) {
-      console.error('❌ Error fetching questions:', err);
-      setError('Failed to fetch questions. Please try again.');
-      
-      // Fallback to empty array if API fails
-      setQuestions([]);
-      setFilteredQuestions([]);
-    } finally {
+  // Load static questions
+  const loadQuestions = () => {
+    setLoading(true);
+    setError(null);
+
+    // Simulate loading delay
+    setTimeout(() => {
+      setQuestions(staticQuestions);
+      setFilteredQuestions(staticQuestions);
       setLoading(false);
-    }
+    }, 500);
   };
 
   useEffect(() => {
-    fetchQuestions();
+    loadQuestions();
   }, []);
 
   useEffect(() => {
@@ -129,15 +235,15 @@ const Questions = () => {
   const filterQuestions = () => {
     let filtered = questions.filter(question => {
       const matchesSearch = question.text?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           question.guidance?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           (question.tags && Array.isArray(question.tags) && question.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())));
-      
+        question.guidance?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (question.tags && Array.isArray(question.tags) && question.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())));
+
       const matchesCategory = selectedCategory === 'all' || question.category === selectedCategory;
       const matchesPriority = selectedPriority === 'all' || question.priority === selectedPriority;
-      
+
       return matchesSearch && matchesCategory && matchesPriority;
     });
-    
+
     setFilteredQuestions(filtered);
     setPage(0);
   };
@@ -152,72 +258,56 @@ const Questions = () => {
     setEditingQuestion(null);
   };
 
-  const handleSaveQuestion = async (questionData) => {
+  const handleSaveQuestion = (questionData) => {
     try {
+      // Prepare question data
+      const processedData = {
+        ...questionData,
+        lastModified: new Date().toISOString().split('T')[0],
+        tags: questionData.tags ? questionData.tags.split(',').map(tag => tag.trim()) : [],
+        status: 'active',
+      };
+
       if (editingQuestion) {
         // Update existing question
-        console.log('🔄 Updating question via API...');
-        const response = await api.put(API_ENDPOINTS.update(editingQuestion.id), {
-          ...questionData,
-          lastModified: new Date().toISOString().split('T')[0],
-          tags: questionData.tags ? questionData.tags.split(',').map(tag => tag.trim()) : [],
-        });
-        
-        console.log('✅ Question updated successfully:', response.data);
-        
-        // Update local state
-        const updatedQuestions = questions.map(q => 
-          q.id === editingQuestion.id ? response.data.question || response.data : q
+        console.log('🔄 Updating question...');
+
+        const updatedQuestions = questions.map(q =>
+          q.id === editingQuestion.id ? { ...q, ...processedData } : q
         );
         setQuestions(updatedQuestions);
-        setSnackbar({ open: true, message: 'Question updated successfully!', severity: 'success' });
+        console.log('✅ Question updated successfully!');
       } else {
         // Add new question
-        console.log('➕ Creating new question via API...');
-        const response = await api.post(API_ENDPOINTS.create, {
-          ...questionData,
-          status: 'active',
+        console.log('🔄 Creating new question...');
+
+        const newQuestion = {
+          ...processedData,
+          id: Math.max(...questions.map(q => q.id), 0) + 1,
           createdAt: new Date().toISOString().split('T')[0],
-          lastModified: new Date().toISOString().split('T')[0],
-          tags: questionData.tags ? questionData.tags.split(',').map(tag => tag.trim()) : [],
-        });
-        
-        console.log('✅ Question created successfully:', response.data);
-        
-        // Add to local state
-        const newQuestion = response.data.question || response.data;
+        };
         setQuestions([...questions, newQuestion]);
-        setSnackbar({ open: true, message: 'Question created successfully!', severity: 'success' });
+        console.log('✅ Question created successfully!');
       }
+
       handleCloseDialog();
     } catch (err) {
       console.error('❌ Error saving question:', err);
-      setSnackbar({ 
-        open: true, 
-        message: `Failed to ${editingQuestion ? 'update' : 'create'} question: ${err.response?.data?.message || err.message}`, 
-        severity: 'error' 
-      });
+      console.error(`❌ Failed to ${editingQuestion ? 'update' : 'create'} question`);
     }
   };
 
-  const handleDeleteQuestion = async (questionId) => {
+  const handleDeleteQuestion = (questionId) => {
     try {
-      console.log('🗑️ Deleting question via API...');
-      await api.delete(API_ENDPOINTS.delete(questionId));
-      
-      console.log('✅ Question deleted successfully');
-      
+      console.log('🗑️ Deleting question...');
+
       // Update local state
       const updatedQuestions = questions.filter(q => q.id !== questionId);
       setQuestions(updatedQuestions);
-      setSnackbar({ open: true, message: 'Question deleted successfully!', severity: 'success' });
+      console.log('✅ Question deleted successfully!');
     } catch (err) {
       console.error('❌ Error deleting question:', err);
-      setSnackbar({ 
-        open: true, 
-        message: `Failed to delete question: ${err.response?.data?.message || err.message}`, 
-        severity: 'error' 
-      });
+      console.error('❌ Failed to delete question');
     }
   };
 
@@ -352,6 +442,7 @@ const Questions = () => {
   return (
     <Layout>
       <Box sx={{ flexGrow: 1 }}>
+
         {/* Header */}
         <Box sx={{ mb: 4 }}>
           <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
@@ -377,9 +468,9 @@ const Questions = () => {
             <Alert severity="error" sx={{ mb: 2 }}>
               {error}
             </Alert>
-            <Button 
-              variant="outlined" 
-              onClick={fetchQuestions}
+            <Button
+              variant="outlined"
+              onClick={loadQuestions}
               startIcon={<RefreshIcon />}
             >
               Retry
@@ -520,7 +611,7 @@ const Questions = () => {
                 fullWidth
                 variant="outlined"
                 startIcon={<RefreshIcon />}
-                onClick={fetchQuestions}
+                onClick={loadQuestions}
                 disabled={loading}
               >
                 Refresh
@@ -558,90 +649,90 @@ const Questions = () => {
                 {filteredQuestions
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   .map((question) => (
-                  <TableRow key={question.id} hover>
-                    <TableCell>
-                      <Box>
-                        <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-                          {question.text}
+                    <TableRow key={question.id} hover>
+                      <TableCell>
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+                            {question.text}
+                          </Typography>
+                          <Box sx={{ mt: 1 }}>
+                            {question.tags && Array.isArray(question.tags) && question.tags.map((tag, index) => (
+                              <Chip
+                                key={index}
+                                label={tag}
+                                size="small"
+                                sx={{ mr: 0.5, mb: 0.5 }}
+                              />
+                            ))}
+                          </Box>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={question.category}
+                          size="small"
+                          variant="outlined"
+                          icon={<CategoryIcon />}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={question.priority}
+                          size="small"
+                          color={getPriorityColor(question.priority)}
+                          icon={<PriorityIcon />}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={question.evidenceRequired ? 'Yes' : 'No'}
+                          size="small"
+                          color={question.evidenceRequired ? 'success' : 'default'}
+                          icon={question.evidenceRequired ? <CheckIcon /> : <InfoIcon />}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={question.status}
+                          size="small"
+                          color={getStatusColor(question.status)}
+                          variant="outlined"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" color="text.secondary">
+                          {question.lastModified}
                         </Typography>
-                                                 <Box sx={{ mt: 1 }}>
-                           {question.tags && Array.isArray(question.tags) && question.tags.map((tag, index) => (
-                             <Chip
-                               key={index}
-                               label={tag}
-                               size="small"
-                               sx={{ mr: 0.5, mb: 0.5 }}
-                             />
-                           ))}
-                         </Box>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={question.category}
-                        size="small"
-                        variant="outlined"
-                        icon={<CategoryIcon />}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={question.priority}
-                        size="small"
-                        color={getPriorityColor(question.priority)}
-                        icon={<PriorityIcon />}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={question.evidenceRequired ? 'Yes' : 'No'}
-                        size="small"
-                        color={question.evidenceRequired ? 'success' : 'default'}
-                        icon={question.evidenceRequired ? <CheckIcon /> : <InfoIcon />}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={question.status}
-                        size="small"
-                        color={getStatusColor(question.status)}
-                        variant="outlined"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary">
-                        {question.lastModified}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Tooltip title="View Details">
-                          <IconButton size="small" color="primary">
-                            <ViewIcon />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Edit Question">
-                          <IconButton 
-                            size="small" 
-                            color="warning"
-                            onClick={() => handleOpenDialog(question)}
-                          >
-                            <EditIcon />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Delete Question">
-                          <IconButton 
-                            size="small" 
-                            color="error"
-                            onClick={() => handleDeleteQuestion(question.id)}
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <Tooltip title="View Details">
+                            <IconButton size="small" color="primary">
+                              <ViewIcon />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Edit Question">
+                            <IconButton
+                              size="small"
+                              color="warning"
+                              onClick={() => handleOpenDialog(question)}
+                            >
+                              <EditIcon />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Delete Question">
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => handleDeleteQuestion(question.id)}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))}
               </TableBody>
             </Table>
           </TableContainer>
@@ -675,21 +766,7 @@ const Questions = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Snackbar */}
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={6000}
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        >
-          <Alert
-            onClose={() => setSnackbar({ ...snackbar, open: false })}
-            severity={snackbar.severity}
-            sx={{ width: '100%' }}
-          >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
+
       </Box>
     </Layout>
   );

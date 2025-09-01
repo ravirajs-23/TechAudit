@@ -17,10 +17,11 @@ import { useForm } from 'react-hook-form';
 import { useAuth } from '../../context/AuthContext';
 
 const Login = () => {
-  const { login, isAuthenticated, loading, error: authError } = useAuth();
+  const { login, isAuthenticated, error: authError } = useAuth();
   const [localError, setLocalError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
   const location = useLocation();
 
   const {
@@ -46,7 +47,7 @@ const Login = () => {
       console.log('🚀 Login attempt with:', { email: data.email, password: '***' });
       setLocalError('');
       setIsSubmitting(true);
-      
+      setLoading(true);
       await login(data.email, data.password);
       
       console.log('✅ Login successful, redirecting to dashboard...');
@@ -56,6 +57,7 @@ const Login = () => {
       setLocalError(errorMessage);
     } finally {
       setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
@@ -64,7 +66,7 @@ const Login = () => {
       console.log('🧪 Demo login attempt...');
       setLocalError('');
       setIsSubmitting(true);
-      
+      setLoading(false);
       // Use demo credentials
       const demoData = { email: 'admin@tecaudit.com', password: 'admin123' };
       setValue('email', demoData.email);
@@ -78,6 +80,7 @@ const Login = () => {
       setLocalError('Demo login failed. Please try with your own credentials.');
     } finally {
       setIsSubmitting(false);
+      setLoading(false);
     }
   };
 

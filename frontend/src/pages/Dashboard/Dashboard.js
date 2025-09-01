@@ -37,57 +37,152 @@ import Layout from '../../components/Layout/Layout';
 
 const Dashboard = () => {
   const { user, isAdmin, isAuthenticated } = useAuth();
-  
+
   console.log('🔍 Dashboard rendered');
   console.log('🔍 User:', user);
   console.log('🔍 Is Admin:', isAdmin);
 
   // Mock data - in real app, this would come from API
   const stats = {
-    totalAudits: 24,
-    completedAudits: 18,
-    pendingAudits: 4,
-    overdueAudits: 2,
-    completionRate: 75,
+    totalAudits: 47,
+    completedAudits: 32,
+    pendingAudits: 9,
+    overdueAudits: 6,
+    completionRate: 68,
+    totalTechnologies: 15,
+    criticalVulnerabilities: 3,
+    complianceScore: 85
   };
 
   const recentAudits = [
     {
       id: 1,
-      name: 'React.js Security Audit',
-      technology: 'React.js',
+      name: 'Oracle Database Security Assessment',
+      technology: 'Oracle Database 19c',
       status: 'completed',
-      auditor: 'John Doe',
-      completedDate: '2024-01-15',
+      auditor: 'Sarah Johnson',
+      completedDate: '2024-01-20',
       progress: 100,
+      score: 8.5,
+      findings: 3,
+      priority: 'High'
     },
     {
       id: 2,
-      name: 'Node.js Backend Review',
-      technology: 'Node.js',
+      name: 'Active Directory Infrastructure Review',
+      technology: 'Microsoft Active Directory',
       status: 'in-progress',
-      auditor: 'Jane Smith',
-      dueDate: '2024-01-20',
+      auditor: 'Michael Chen',
+      startDate: '2024-01-18',
       progress: 65,
+      score: 7.8,
+      findings: 5,
+      priority: 'Critical'
     },
     {
       id: 3,
-      name: 'AWS Infrastructure Assessment',
-      technology: 'AWS',
-      status: 'pending',
-      auditor: 'Mike Johnson',
-      assignedDate: '2024-01-10',
-      progress: 0,
+      name: 'Kubernetes Security Configuration Audit',
+      technology: 'Kubernetes',
+      status: 'in-progress',
+      auditor: 'Emily Rodriguez',
+      startDate: '2024-01-17',
+      progress: 40,
+      score: 7.2,
+      findings: 8,
+      priority: 'High'
     },
     {
       id: 4,
-      name: 'Database Security Review',
-      technology: 'PostgreSQL',
-      status: 'overdue',
-      auditor: 'Sarah Wilson',
-      dueDate: '2024-01-05',
-      progress: 30,
+      name: 'Apache Web Server Security Review',
+      technology: 'Apache Web Server',
+      status: 'pending',
+      auditor: 'David Wilson',
+      scheduledDate: '2024-01-25',
+      progress: 0,
+      priority: 'Medium'
     },
+    {
+      id: 5,
+      name: 'VMware vSphere Infrastructure Assessment',
+      technology: 'VMware vSphere',
+      status: 'overdue',
+      auditor: 'Lisa Thompson',
+      dueDate: '2024-01-15',
+      progress: 25,
+      score: 6.8,
+      findings: 12,
+      priority: 'Critical'
+    },
+    {
+      id: 6,
+      name: 'MongoDB Security Configuration Review',
+      technology: 'MongoDB Enterprise',
+      status: 'completed',
+      auditor: 'Robert Kim',
+      completedDate: '2024-01-16',
+      progress: 100,
+      score: 7.9,
+      findings: 2,
+      priority: 'Medium'
+    }
+  ];
+
+  const securityMetrics = {
+    vulnerabilityTrends: [
+      { month: 'Sep', high: 8, medium: 15, low: 12 },
+      { month: 'Oct', high: 6, medium: 18, low: 10 },
+      { month: 'Nov', high: 4, medium: 12, low: 8 },
+      { month: 'Dec', high: 5, medium: 16, low: 14 },
+      { month: 'Jan', high: 3, medium: 11, low: 9 }
+    ],
+    complianceByCategory: [
+      { category: 'Database Security', score: 85, total: 12 },
+      { category: 'Network Infrastructure', score: 92, total: 15 },
+      { category: 'Identity Management', score: 78, total: 18 },
+      { category: 'Data Protection', score: 89, total: 14 },
+      { category: 'Incident Response', score: 95, total: 11 }
+    ],
+    riskDistribution: [
+      { level: 'Critical', count: 3, percentage: 15 },
+      { level: 'High', count: 8, percentage: 40 },
+      { level: 'Medium', count: 7, percentage: 35 },
+      { level: 'Low', count: 2, percentage: 10 }
+    ]
+  };
+
+  const upcomingTasks = [
+    {
+      id: 1,
+      task: 'Quarterly Firewall Rule Review',
+      technology: 'Cisco ASA Firewall',
+      dueDate: '2024-01-30',
+      priority: 'High',
+      assignee: 'Security Team'
+    },
+    {
+      id: 2,
+      task: 'SSL Certificate Renewal',
+      technology: 'Apache Web Server',
+      dueDate: '2024-02-05',
+      priority: 'Critical',
+      assignee: 'Infrastructure Team'
+    },
+    {
+      id: 3,
+      task: 'User Access Review',
+      technology: 'Microsoft Active Directory',
+      dueDate: '2024-02-10',
+      priority: 'Medium',
+      assignee: 'Identity Team'
+    },
+    {
+      id: 4,
+      task: 'Backup Recovery Test',
+      technology: 'Oracle Database 19c',
+      dueDate: '2024-02-15',
+      priority: 'High',
+      assignee: 'Database Team'
+    }
   ];
 
   const quickActions = [
@@ -160,11 +255,11 @@ const Dashboard = () => {
           </Typography>
           {getStatusChip(audit.status)}
         </Box>
-        
+
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
           Technology: {audit.technology}
         </Typography>
-        
+
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Auditor: {audit.auditor}
         </Typography>
@@ -175,9 +270,9 @@ const Dashboard = () => {
               <Typography variant="body2">Progress</Typography>
               <Typography variant="body2">{audit.progress}%</Typography>
             </Box>
-            <LinearProgress 
-              variant="determinate" 
-              value={audit.progress} 
+            <LinearProgress
+              variant="determinate"
+              value={audit.progress}
               sx={{ height: 8, borderRadius: 4 }}
             />
           </Box>
@@ -186,10 +281,10 @@ const Dashboard = () => {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="caption" color="text.secondary">
             {audit.status === 'completed' ? `Completed: ${audit.completedDate}` :
-             audit.status === 'overdue' ? `Due: ${audit.dueDate}` :
-             `Assigned: ${audit.assignedDate}`}
+              audit.status === 'overdue' ? `Due: ${audit.dueDate}` :
+                `Assigned: ${audit.assignedDate}`}
           </Typography>
-          
+
           <Box>
             <Tooltip title="View Details">
               <IconButton size="small" color="primary">
@@ -220,21 +315,21 @@ const Dashboard = () => {
     const handleClick = () => {
       console.log('🚀 QuickAction clicked:', action.title, 'Path:', action.path);
       console.log('🚀 Current URL:', window.location.href);
-      
+
       // Show alert to confirm click is working
       alert(`Clicked: ${action.title} - Navigating to: ${action.path}`);
-      
+
       // Use direct navigation instead of React Router
       window.location.href = action.path;
     };
 
     return (
-      <Card 
-        sx={{ 
-          height: '100%', 
+      <Card
+        sx={{
+          height: '100%',
           cursor: 'pointer',
           transition: 'all 0.2s',
-          '&:hover': { 
+          '&:hover': {
             transform: 'translateY(-4px)',
             boxShadow: 4,
           }
@@ -282,8 +377,8 @@ const Dashboard = () => {
             </Grid>
           </Grid>
           <Box sx={{ mt: 2 }}>
-            <Button 
-              variant="outlined" 
+            <Button
+              variant="outlined"
               size="small"
               onClick={() => {
                 console.log('🔍 Current auth state:', { isAuthenticated, user, token: localStorage.getItem('token') });
@@ -352,11 +447,11 @@ const Dashboard = () => {
           <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 'bold', mb: 2 }}>
             Quick Actions
           </Typography>
-          
+
           {/* Test Navigation Button */}
           <Box sx={{ mb: 2 }}>
-            <Button 
-              variant="outlined" 
+            <Button
+              variant="outlined"
               onClick={() => {
                 console.log('🧪 Test navigation button clicked');
                 alert('Test button clicked! Navigating to Questions...');
@@ -366,8 +461,8 @@ const Dashboard = () => {
             >
               🧪 Test Navigate to Questions
             </Button>
-            <Button 
-              variant="outlined" 
+            <Button
+              variant="outlined"
               onClick={() => {
                 console.log('🧪 Test navigation button clicked');
                 alert('Test button clicked! Navigating to Dashboard...');
@@ -376,8 +471,8 @@ const Dashboard = () => {
             >
               🧪 Test Back to Dashboard
             </Button>
-            <Button 
-              variant="contained" 
+            <Button
+              variant="contained"
               color="error"
               onClick={() => {
                 alert('Simple test button works!');
@@ -387,7 +482,7 @@ const Dashboard = () => {
               🧪 Simple Test
             </Button>
           </Box>
-          
+
           <Grid container spacing={2}>
             {console.log('🔍 Rendering quickActions:', quickActions)}
             {quickActions.map((action, index) => {

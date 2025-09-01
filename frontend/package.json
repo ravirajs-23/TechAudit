@@ -22,9 +22,14 @@
   },
   "scripts": {
     "start": "react-scripts start",
+    "start:debug": "GENERATE_SOURCEMAP=true react-scripts start",
     "build": "react-scripts build",
+    "build:debug": "GENERATE_SOURCEMAP=true react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "test:debug": "react-scripts test --verbose",
+    "test:coverage": "react-scripts test --coverage --watchAll=false",
+    "eject": "react-scripts eject",
+    "analyze": "npm run build && npx serve -s build"
   },
   "eslintConfig": {
     "extends": [

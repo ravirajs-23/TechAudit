@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -8,9 +9,7 @@ import {
   CardContent,
   Button,
   TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
+
   IconButton,
   Chip,
   Alert,
@@ -57,16 +56,73 @@ import {
 import Layout from '../../components/Layout/Layout';
 
 const Technologies = () => {
+  const navigate = useNavigate();
   const [technologies, setTechnologies] = useState([]);
   const [filteredTechnologies, setFilteredTechnologies] = useState([]);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [editingTechnology, setEditingTechnology] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedRiskLevel, setSelectedRiskLevel] = useState('all');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [questionnaires, setQuestionnaires] = useState([]);
+
+  // Mock questionnaires data
+  const mockQuestionnaires = [
+    {
+      id: 1,
+      title: 'Database Security Assessment',
+      description: 'Comprehensive security evaluation for database systems',
+      questionCount: 25,
+      category: 'Database',
+      estimatedTime: '45 minutes',
+      status: 'active'
+    },
+    {
+      id: 2,
+      title: 'Identity Management Audit',
+      description: 'Authentication and authorization systems review',
+      questionCount: 18,
+      category: 'Identity Management',
+      estimatedTime: '30 minutes',
+      status: 'active'
+    },
+    {
+      id: 3,
+      title: 'Web Server Security Check',
+      description: 'Security configuration and vulnerability assessment',
+      questionCount: 22,
+      category: 'Web Server',
+      estimatedTime: '35 minutes',
+      status: 'active'
+    },
+    {
+      id: 4,
+      title: 'Network Security Review',
+      description: 'Firewall and network infrastructure evaluation',
+      questionCount: 30,
+      category: 'Network Security',
+      estimatedTime: '50 minutes',
+      status: 'active'
+    },
+    {
+      id: 5,
+      title: 'Virtualization Platform Audit',
+      description: 'Virtual infrastructure security assessment',
+      questionCount: 20,
+      category: 'Virtualization',
+      estimatedTime: '40 minutes',
+      status: 'active'
+    },
+    {
+      id: 6,
+      title: 'Container Security Assessment',
+      description: 'Container orchestration and security evaluation',
+      questionCount: 28,
+      category: 'Container Orchestration',
+      estimatedTime: '45 minutes',
+      status: 'active'
+    }
+  ];
 
   // Mock data - in real app, this would come from API
   const mockTechnologies = [
@@ -74,205 +130,276 @@ const Technologies = () => {
       id: 1,
       name: 'Oracle Database 19c',
       version: '19.3.0.0.0',
-      vendor: 'Oracle Corporation',
       category: 'Database',
-      riskLevel: 'High',
-      description: 'Enterprise database management system with advanced security features',
+      description: 'Enterprise database management system with advanced security features and comprehensive audit capabilities',
       status: 'active',
+      assignedQuestionnaireId: 1, // One-to-one mapping
       lastUpdated: '2024-01-20',
       securityScore: 8.5,
       complianceStatus: 'Compliant',
       questionnaireCount: 3,
-      auditCount: 2,
-      tags: ['database', 'enterprise', 'oracle', 'sql'],
+      auditCount: 8,
+
       features: [
-        'Advanced Security',
-        'Data Encryption',
+        'Advanced Security Options',
+        'Transparent Data Encryption',
+        'Database Vault',
         'Audit Logging',
-        'Access Control'
+        'Role-Based Access Control'
       ],
       risks: [
         'Complex configuration management',
         'High licensing costs',
-        'Requires specialized expertise'
-      ]
+        'Requires specialized expertise',
+        'Performance impact of security features'
+      ],
+      vulnerabilities: [
+        'CVE-2023-21980 (Medium)',
+        'CVE-2023-21955 (Low)'
+      ],
+      lastAuditDate: '2024-01-15',
+      nextAuditDue: '2024-04-15'
     },
     {
       id: 2,
-      name: 'React.js',
-      version: '18.2.0',
-      vendor: 'Meta (Facebook)',
-      category: 'Frontend Framework',
-      riskLevel: 'Medium',
-      description: 'JavaScript library for building user interfaces',
+      name: 'Microsoft Active Directory',
+      version: '2019',
+      category: 'Identity Management',
+      description: 'Centralized directory service for Windows domain networks providing authentication and authorization',
       status: 'active',
+      assignedQuestionnaireId: 2, // One-to-one mapping
       lastUpdated: '2024-01-18',
       securityScore: 7.8,
       complianceStatus: 'Compliant',
       questionnaireCount: 2,
-      auditCount: 1,
-      tags: ['frontend', 'javascript', 'react', 'ui'],
+      auditCount: 12,
+
       features: [
-        'Component-based architecture',
-        'Virtual DOM',
-        'JSX support',
-        'Hooks system'
+        'Kerberos Authentication',
+        'Group Policy Management',
+        'LDAP Services',
+        'Certificate Services',
+        'Federation Services'
       ],
       risks: [
-        'Regular security updates required',
-        'Dependency management complexity',
-        'Performance optimization needed'
-      ]
+        'Single point of failure',
+        'Privilege escalation vulnerabilities',
+        'Complex delegation model',
+        'Lateral movement risks'
+      ],
+      vulnerabilities: [
+        'CVE-2023-28252 (High)',
+        'CVE-2023-28229 (Medium)'
+      ],
+      lastAuditDate: '2024-01-10',
+      nextAuditDue: '2024-04-10'
     },
     {
       id: 3,
-      name: 'AWS EC2',
-      version: 'Latest',
-      vendor: 'Amazon Web Services',
-      category: 'Cloud Infrastructure',
-      riskLevel: 'High',
-      description: 'Elastic Compute Cloud service for scalable computing capacity',
+      name: 'Apache Web Server',
+      version: '2.4.54',
+      category: 'Web Server',
+      description: 'Open-source HTTP server for modern operating systems including UNIX and Windows',
       status: 'active',
-      lastUpdated: '2024-01-15',
-      securityScore: 9.2,
+      assignedQuestionnaireId: 3, // One-to-one mapping
+      lastUpdated: '2024-01-16',
+      securityScore: 8.2,
       complianceStatus: 'Compliant',
-      questionnaireCount: 4,
-      auditCount: 3,
-      tags: ['cloud', 'aws', 'infrastructure', 'compute'],
+      questionnaireCount: 1,
+      auditCount: 5,
+
       features: [
-        'Auto-scaling',
-        'Load balancing',
-        'Security groups',
-        'IAM integration'
+        'SSL/TLS Support',
+        'Virtual Hosting',
+        'URL Rewriting',
+        'Load Balancing',
+        'Security Modules'
       ],
       risks: [
-        'Complex security configuration',
-        'Cost management challenges',
-        'Shared responsibility model'
-      ]
+        'Misconfigurations common',
+        'Module vulnerabilities',
+        'DDoS attack target',
+        'Log file management issues'
+      ],
+      vulnerabilities: [
+        'CVE-2023-25690 (Medium)',
+        'CVE-2023-27522 (Low)'
+      ],
+      lastAuditDate: '2024-01-08',
+      nextAuditDue: '2024-04-08'
     },
     {
       id: 4,
-      name: 'PostgreSQL',
-      version: '15.4',
-      vendor: 'PostgreSQL Global Development Group',
-      category: 'Database',
-      riskLevel: 'Medium',
-      description: 'Advanced open-source relational database system',
+      name: 'Cisco ASA Firewall',
+      version: '9.16.4',
+      category: 'Network Security',
+      description: 'Adaptive Security Appliance providing firewall, VPN, and intrusion prevention capabilities',
       status: 'active',
-      lastUpdated: '2024-01-12',
-      securityScore: 8.0,
+      assignedQuestionnaireId: 4, // One-to-one mapping
+      lastUpdated: '2024-01-14',
+      securityScore: 8.7,
       complianceStatus: 'Compliant',
       questionnaireCount: 2,
-      auditCount: 1,
-      tags: ['database', 'open-source', 'postgresql', 'sql'],
+      auditCount: 6,
+
       features: [
-        'ACID compliance',
-        'Extensibility',
-        'Advanced indexing',
-        'JSON support'
+        'Stateful Packet Inspection',
+        'VPN Gateway',
+        'Intrusion Prevention',
+        'Application Control',
+        'Identity-Based Policies'
       ],
       risks: [
-        'Community support dependency',
-        'Performance tuning complexity',
-        'Limited enterprise features'
-      ]
+        'Complex rule management',
+        'Firmware vulnerabilities',
+        'Configuration drift',
+        'Performance bottlenecks'
+      ],
+      vulnerabilities: [
+        'CVE-2023-20269 (High)',
+        'CVE-2023-20185 (Medium)'
+      ],
+      lastAuditDate: '2024-01-12',
+      nextAuditDue: '2024-04-12'
     },
     {
       id: 5,
-      name: 'Docker',
-      version: '24.0.7',
-      vendor: 'Docker Inc.',
-      category: 'Containerization',
-      riskLevel: 'Medium',
-      description: 'Platform for developing, shipping, and running applications in containers',
+      name: 'VMware vSphere',
+      version: '7.0 U3',
+      category: 'Virtualization',
+      description: 'Enterprise virtualization platform for building cloud infrastructures',
       status: 'active',
-      lastUpdated: '2024-01-10',
-      securityScore: 7.5,
-      complianceStatus: 'Under Review',
-      questionnaireCount: 1,
-      auditCount: 0,
-      tags: ['containerization', 'devops', 'docker', 'microservices'],
+      assignedQuestionnaireId: 5, // One-to-one mapping
+      lastUpdated: '2024-01-13',
+      securityScore: 8.0,
+      complianceStatus: 'Needs Review',
+      questionnaireCount: 3,
+      auditCount: 7,
+
       features: [
-        'Container isolation',
-        'Image management',
-        'Orchestration support',
-        'Registry integration'
+        'Virtual Machine Management',
+        'Resource Pooling',
+        'High Availability',
+        'Distributed Resource Scheduler',
+        'vMotion Technology'
       ],
       risks: [
-        'Container security concerns',
-        'Resource management',
-        'Network complexity'
-      ]
+        'VM escape vulnerabilities',
+        'Hypervisor attacks',
+        'Resource contention',
+        'Complex licensing model'
+      ],
+      vulnerabilities: [
+        'CVE-2023-20867 (Critical)',
+        'CVE-2023-20900 (High)'
+      ],
+      lastAuditDate: '2024-01-05',
+      nextAuditDue: '2024-04-05'
     },
+    {
+      id: 6,
+      name: 'MongoDB Enterprise',
+      version: '6.0.3',
+      category: 'Database',
+      description: 'Document-oriented NoSQL database with enterprise security and management features',
+      status: 'active',
+      assignedQuestionnaireId: null, // No questionnaire assigned yet
+      lastUpdated: '2024-01-11',
+      securityScore: 7.9,
+      complianceStatus: 'Compliant',
+      questionnaireCount: 2,
+      auditCount: 4,
+
+      features: [
+        'RBAC Authorization',
+        'Field-Level Encryption',
+        'Audit Logging',
+        'LDAP Integration',
+        'Kerberos Authentication'
+      ],
+      risks: [
+        'Exposed default configurations',
+        'NoSQL injection attacks',
+        'Insufficient access controls',
+        'Data consistency challenges'
+      ],
+      vulnerabilities: [
+        'CVE-2023-1409 (Medium)'
+      ],
+      lastAuditDate: '2024-01-09',
+      nextAuditDue: '2024-04-09'
+    },
+    {
+      id: 7,
+      name: 'Kubernetes',
+      version: '1.25.4',
+      category: 'Container Orchestration',
+      description: 'Open-source container orchestration platform for automating deployment and management',
+      status: 'active',
+      assignedQuestionnaireId: 6, // One-to-one mapping
+      lastUpdated: '2024-01-17',
+      securityScore: 7.6,
+      complianceStatus: 'Needs Review',
+      questionnaireCount: 4,
+      auditCount: 9,
+
+      features: [
+        'Pod Security Standards',
+        'Network Policies',
+        'RBAC',
+        'Secrets Management',
+        'Service Mesh Integration'
+      ],
+      risks: [
+        'Misconfured RBAC',
+        'Insecure container images',
+        'Network policy gaps',
+        'Secrets management issues'
+      ],
+      vulnerabilities: [
+        'CVE-2023-2727 (High)',
+        'CVE-2023-2728 (Medium)'
+      ],
+      lastAuditDate: '2024-01-07',
+      nextAuditDue: '2024-04-07'
+    }
   ];
 
-  const categories = ['Database', 'Frontend Framework', 'Cloud Infrastructure', 'Containerization', 'Backend Framework', 'Security Tools', 'Monitoring', 'DevOps'];
-  const riskLevels = ['Low', 'Medium', 'High', 'Critical'];
+  const categories = ['Database', 'Identity Management', 'Web Server', 'Network Security', 'Virtualization', 'Container Orchestration'];
 
   useEffect(() => {
     setTechnologies(mockTechnologies);
     setFilteredTechnologies(mockTechnologies);
+    setQuestionnaires(mockQuestionnaires);
   }, []);
 
   useEffect(() => {
     filterTechnologies();
-  }, [searchTerm, selectedCategory, selectedRiskLevel, technologies]);
+  }, [searchTerm, selectedCategory, technologies]);
 
   const filterTechnologies = () => {
+    if (!technologies) return;
+
     let filtered = technologies.filter(technology => {
       const matchesSearch = technology.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           technology.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           technology.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-      
+        technology.description.toLowerCase().includes(searchTerm.toLowerCase());
+
       const matchesCategory = selectedCategory === 'all' || technology.category === selectedCategory;
-      const matchesRiskLevel = selectedRiskLevel === 'all' || technology.riskLevel === selectedRiskLevel;
-      
-      return matchesSearch && matchesCategory && matchesRiskLevel;
+
+      return matchesSearch && matchesCategory;
     });
-    
+
     setFilteredTechnologies(filtered);
     setPage(0);
   };
 
-  const handleOpenDialog = (technology = null) => {
-    setEditingTechnology(technology);
-    setOpenDialog(true);
+  const handleCreateTechnology = () => {
+    navigate('/technologies/create');
   };
 
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-    setEditingTechnology(null);
-  };
-
-  const handleSaveTechnology = (technologyData) => {
-    if (editingTechnology) {
-      // Update existing technology
-      const updatedTechnologies = technologies.map(t => 
-        t.id === editingTechnology.id ? { ...t, ...technologyData, lastUpdated: new Date().toISOString().split('T')[0] } : t
-      );
-      setTechnologies(updatedTechnologies);
-      setSnackbar({ open: true, message: 'Technology updated successfully!', severity: 'success' });
-    } else {
-      // Add new technology
-      const newTechnology = {
-        id: Math.max(...technologies.map(t => t.id)) + 1,
-        ...technologyData,
-        status: 'active',
-        securityScore: 7.0,
-        complianceStatus: 'Under Review',
-        questionnaireCount: 0,
-        auditCount: 0,
-        createdAt: new Date().toISOString().split('T')[0],
-        lastUpdated: new Date().toISOString().split('T')[0],
-        tags: technologyData.tags ? technologyData.tags.split(',').map(tag => tag.trim()) : [],
-        features: [],
-        risks: [],
-      };
-      setTechnologies([...technologies, newTechnology]);
-      setSnackbar({ open: true, message: 'Technology created successfully!', severity: 'success' });
-    }
-    handleCloseDialog();
+  const handleEditTechnology = (technology) => {
+    // Navigate to edit page with technology data
+    navigate('/technologies/create', { state: { editingTechnology: technology } });
   };
 
   const handleDeleteTechnology = (technologyId) => {
@@ -309,6 +436,14 @@ const Technologies = () => {
     }
   };
 
+  // Helper functions for questionnaire assignment
+  const getQuestionnaireById = (id) => {
+    if (!questionnaires || !id) return null;
+    return questionnaires.find(q => q.id === id);
+  };
+
+
+
   const getComplianceColor = (status) => {
     switch (status) {
       case 'Compliant': return 'success';
@@ -318,113 +453,7 @@ const Technologies = () => {
     }
   };
 
-  const TechnologyForm = ({ technology, onSave, onCancel }) => {
-    const [formData, setFormData] = useState({
-      name: technology?.name || '',
-      version: technology?.version || '',
-      vendor: technology?.vendor || '',
-      category: technology?.category || '',
-      riskLevel: technology?.riskLevel || 'Medium',
-      description: technology?.description || '',
-      tags: technology?.tags ? technology.tags.join(', ') : '',
-    });
 
-    const handleSubmit = (e) => {
-      e.preventDefault();
-      onSave(formData);
-    };
-
-    return (
-      <form onSubmit={handleSubmit}>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Technology Name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-              helperText="Enter the technology name"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Version"
-              value={formData.version}
-              onChange={(e) => setFormData({ ...formData, version: e.target.value })}
-              helperText="Enter the version number"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Vendor"
-              value={formData.vendor}
-              onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
-              required
-              helperText="Enter the vendor or developer name"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth required>
-              <InputLabel>Category</InputLabel>
-              <Select
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                label="Category"
-              >
-                {categories.map(category => (
-                  <MenuItem key={category} value={category}>{category}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth required>
-              <InputLabel>Risk Level</InputLabel>
-              <Select
-                value={formData.riskLevel}
-                onChange={(e) => setFormData({ ...formData, riskLevel: e.target.value })}
-                label="Risk Level"
-              >
-                {riskLevels.map(level => (
-                  <MenuItem key={level} value={level}>{level}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Description"
-              multiline
-              rows={3}
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              required
-              helperText="Provide a detailed description of the technology"
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Tags"
-              value={formData.tags}
-              onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-              helperText="Enter tags separated by commas (e.g., database, cloud, security)"
-            />
-          </Grid>
-        </Grid>
-        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-          <Button onClick={onCancel}>Cancel</Button>
-          <Button type="submit" variant="contained">
-            {technology ? 'Update Technology' : 'Create Technology'}
-          </Button>
-        </Box>
-      </form>
-    );
-  };
 
   return (
     <Layout>
@@ -450,7 +479,7 @@ const Technologies = () => {
                   </Avatar>
                   <Box>
                     <Typography variant="h4" component="div" sx={{ fontWeight: 'bold' }}>
-                      {technologies.length}
+                      {technologies?.length || 0}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Total Technologies
@@ -469,7 +498,7 @@ const Technologies = () => {
                   </Avatar>
                   <Box>
                     <Typography variant="h4" component="div" sx={{ fontWeight: 'bold' }}>
-                      {technologies.filter(t => t.complianceStatus === 'Compliant').length}
+                      {technologies?.filter(t => t.complianceStatus === 'Compliant').length || 0}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Compliant
@@ -488,10 +517,10 @@ const Technologies = () => {
                   </Avatar>
                   <Box>
                     <Typography variant="h4" component="div" sx={{ fontWeight: 'bold' }}>
-                      {technologies.filter(t => t.riskLevel === 'High' || t.riskLevel === 'Critical').length}
+                      {technologies?.filter(t => t.securityScore < 8.0).length || 0}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      High Risk
+                      Low Security Score
                     </Typography>
                   </Box>
                 </Box>
@@ -552,27 +581,13 @@ const Technologies = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <FormControl fullWidth>
-                <InputLabel>Risk Level</InputLabel>
-                <Select
-                  value={selectedRiskLevel}
-                  onChange={(e) => setSelectedRiskLevel(e.target.value)}
-                  label="Risk Level"
-                >
-                  <MenuItem value="all">All Risk Levels</MenuItem>
-                  {riskLevels.map(level => (
-                    <MenuItem key={level} value={level}>{level}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
+
             <Grid item xs={12} md={2}>
               <Button
                 fullWidth
                 variant="contained"
                 startIcon={<AddIcon />}
-                onClick={() => handleOpenDialog()}
+                onClick={handleCreateTechnology}
               >
                 Add Technology
               </Button>
@@ -588,136 +603,132 @@ const Technologies = () => {
                 <TableRow>
                   <TableCell>Technology</TableCell>
                   <TableCell>Category</TableCell>
-                  <TableCell>Risk Level</TableCell>
+                  <TableCell>Assigned Questionnaire</TableCell>
                   <TableCell>Security Score</TableCell>
                   <TableCell>Compliance</TableCell>
-                  <TableCell>Questionnaires</TableCell>
                   <TableCell>Last Updated</TableCell>
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredTechnologies
+                {(filteredTechnologies || [])
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   .map((technology) => (
-                  <TableRow key={technology.id} hover>
-                    <TableCell>
-                      <Box>
-                        <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-                          {technology.name}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                          {technology.vendor} • v{technology.version}
-                        </Typography>
-                        <Box sx={{ mt: 1 }}>
-                          {technology.tags.slice(0, 3).map((tag, index) => (
-                            <Chip
-                              key={index}
-                              label={tag}
-                              size="small"
-                              sx={{ mr: 0.5, mb: 0.5 }}
-                            />
-                          ))}
-                          {technology.tags.length > 3 && (
-                            <Chip
-                              label={`+${technology.tags.length - 3}`}
-                              size="small"
-                              variant="outlined"
-                            />
-                          )}
+                    <TableRow key={technology.id} hover>
+                      <TableCell>
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+                            {technology.name}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                            v{technology.version}
+                          </Typography>
+
                         </Box>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={technology.category}
-                        size="small"
-                        variant="outlined"
-                        icon={<CategoryIcon />}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={technology.riskLevel}
-                        size="small"
-                        color={getRiskLevelColor(technology.riskLevel)}
-                        icon={<WarningIcon />}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Typography variant="body2" sx={{ mr: 1 }}>
-                          {technology.securityScore}
-                        </Typography>
-                        <Rating
-                          value={technology.securityScore / 2}
-                          precision={0.5}
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={technology.category}
                           size="small"
-                          readOnly
+                          variant="outlined"
+                          icon={<CategoryIcon />}
                         />
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={technology.complianceStatus}
-                        size="small"
-                        color={getComplianceColor(technology.complianceStatus)}
-                        variant="outlined"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Typography variant="body2" sx={{ mr: 1 }}>
-                          {technology.questionnaireCount}
-                        </Typography>
-                        <LinearProgress
-                          variant="determinate"
-                          value={(technology.questionnaireCount / 5) * 100}
-                          sx={{ width: 60, height: 6, borderRadius: 3 }}
-                        />
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary">
-                        {technology.lastUpdated}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Tooltip title="View Details">
-                          <IconButton size="small" color="primary">
-                            <ViewIcon />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Edit Technology">
-                          <IconButton 
-                            size="small" 
+                      </TableCell>
+
+                      <TableCell>
+                        {technology.assignedQuestionnaireId ? (
+                          <Box>
+                            <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+                              {getQuestionnaireById(technology.assignedQuestionnaireId)?.title}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {getQuestionnaireById(technology.assignedQuestionnaireId)?.questionCount} questions
+                            </Typography>
+                          </Box>
+                        ) : (
+                          <Chip
+                            label="No questionnaire"
+                            size="small"
                             color="warning"
-                            onClick={() => handleOpenDialog(technology)}
-                          >
-                            <EditIcon />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Delete Technology">
-                          <IconButton 
-                            size="small" 
-                            color="error"
-                            onClick={() => handleDeleteTechnology(technology.id)}
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                            variant="outlined"
+                          />
+                        )}
+                      </TableCell>
+
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Typography variant="body2" sx={{ mr: 1 }}>
+                            {technology.securityScore}
+                          </Typography>
+                          <Rating
+                            value={technology.securityScore / 2}
+                            precision={0.5}
+                            size="small"
+                            readOnly
+                          />
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={technology.complianceStatus}
+                          size="small"
+                          color={getComplianceColor(technology.complianceStatus)}
+                          variant="outlined"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Typography variant="body2" sx={{ mr: 1 }}>
+                            {technology.questionnaireCount}
+                          </Typography>
+                          <LinearProgress
+                            variant="determinate"
+                            value={(technology.questionnaireCount / 5) * 100}
+                            sx={{ width: 60, height: 6, borderRadius: 3 }}
+                          />
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" color="text.secondary">
+                          {technology.lastUpdated}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <Tooltip title="View Details">
+                            <IconButton size="small" color="primary">
+                              <ViewIcon />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Edit Technology">
+                            <IconButton
+                              size="small"
+                              color="warning"
+                              onClick={() => handleEditTechnology(technology)}
+                            >
+                              <EditIcon />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Delete Technology">
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => handleDeleteTechnology(technology.id)}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))}
               </TableBody>
             </Table>
           </TableContainer>
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
-            count={filteredTechnologies.length}
+            count={filteredTechnologies?.length || 0}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={handleChangePage}
@@ -740,7 +751,10 @@ const Technologies = () => {
                       {technology.name}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      {technology.category} • Risk: {technology.riskLevel} • Score: {technology.securityScore}/10
+                      {technology.category} • Score: {technology.securityScore}/10
+                      {technology.assignedQuestionnaireId && (
+                        <span> • Questionnaire: {getQuestionnaireById(technology.assignedQuestionnaireId)?.title}</span>
+                      )}
                     </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', gap: 1, mr: 2 }}>
@@ -762,7 +776,7 @@ const Technologies = () => {
                   <Typography variant="body2" sx={{ mb: 2 }}>
                     {technology.description}
                   </Typography>
-                  
+
                   <Grid container spacing={2}>
                     <Grid item xs={12} md={6}>
                       <Typography variant="subtitle2" gutterBottom>
@@ -777,7 +791,7 @@ const Technologies = () => {
                         ))}
                       </Box>
                     </Grid>
-                    
+
                     <Grid item xs={12} md={6}>
                       <Typography variant="subtitle2" gutterBottom>
                         Risk Factors:
@@ -792,41 +806,15 @@ const Technologies = () => {
                       </Box>
                     </Grid>
                   </Grid>
-                  
-                  <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
-                    {technology.tags.map((tag, index) => (
-                      <Chip
-                        key={index}
-                        label={tag}
-                        size="small"
-                        variant="outlined"
-                      />
-                    ))}
-                  </Box>
+
+
                 </Box>
               </AccordionDetails>
             </Accordion>
           ))}
         </Box>
 
-        {/* Add/Edit Dialog */}
-        <Dialog
-          open={openDialog}
-          onClose={handleCloseDialog}
-          maxWidth="md"
-          fullWidth
-        >
-          <DialogTitle>
-            {editingTechnology ? 'Edit Technology' : 'Create New Technology'}
-          </DialogTitle>
-          <DialogContent>
-            <TechnologyForm
-              technology={editingTechnology}
-              onSave={handleSaveTechnology}
-              onCancel={handleCloseDialog}
-            />
-          </DialogContent>
-        </Dialog>
+
 
         {/* Snackbar */}
         <Snackbar

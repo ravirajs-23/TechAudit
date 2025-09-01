@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import api from '../services/api';
 
 // Action types
 const AUTH_ACTIONS = {
@@ -35,7 +34,7 @@ const authReducer = (state, action) => {
         loading: true,
         error: null,
       };
-    
+
     case AUTH_ACTIONS.LOGIN_SUCCESS:
     case AUTH_ACTIONS.REGISTER_SUCCESS:
       return {
@@ -46,7 +45,7 @@ const authReducer = (state, action) => {
         loading: false,
         error: null,
       };
-    
+
     case AUTH_ACTIONS.LOGIN_FAILURE:
     case AUTH_ACTIONS.REGISTER_FAILURE:
       return {
@@ -57,7 +56,7 @@ const authReducer = (state, action) => {
         loading: false,
         error: action.payload,
       };
-    
+
     case AUTH_ACTIONS.LOGOUT:
       return {
         ...state,
@@ -67,7 +66,7 @@ const authReducer = (state, action) => {
         loading: false,
         error: null,
       };
-    
+
     case AUTH_ACTIONS.LOAD_USER:
       return {
         ...state,
@@ -75,13 +74,13 @@ const authReducer = (state, action) => {
         isAuthenticated: true,
         loading: false,
       };
-    
+
     case AUTH_ACTIONS.CLEAR_ERROR:
       return {
         ...state,
         error: null,
       };
-    
+
     default:
       return state;
   }
@@ -95,41 +94,26 @@ export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
   const navigate = useNavigate();
 
-  // Set auth token header
+  // Set auth token in localStorage
   useEffect(() => {
     if (state.token) {
-      console.log('🔑 AuthContext: Setting Authorization header with token');
-      api.defaults.headers.common['Authorization'] = `Bearer ${state.token}`;
       // Store token in localStorage
       localStorage.setItem('token', state.token);
     } else {
-      console.log('🔑 AuthContext: Removing Authorization header');
-      delete api.defaults.headers.common['Authorization'];
       // Remove token from localStorage
       localStorage.removeItem('token');
     }
   }, [state.token]);
 
-  // Test API connection
+  // Initialize application
   useEffect(() => {
-    const testConnection = async () => {
-      try {
-        console.log('🧪 Testing API connection...');
-        const response = await api.get('/health');
-        console.log('✅ API connection successful:', response.data);
-      } catch (error) {
-        console.error('❌ API connection failed:', error);
-      }
-    };
-    
-    testConnection();
+    console.log('✅ Auth context initialized');
   }, []);
 
   // Check for stored token on app startup
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     if (storedToken && !state.token) {
-      console.log('🔍 AuthContext: Found stored token, restoring session...');
       dispatch({
         type: AUTH_ACTIONS.LOGIN_SUCCESS,
         payload: { token: storedToken, user: null }
@@ -153,145 +137,92 @@ export const AuthProvider = ({ children }) => {
     }
   }, [state.token, state.user]);
 
-  // Load user from API
-  const loadUser = async () => {
+  // Validate token (mock validation)
+  const validateToken = () => {
+    if (!state.token) return false;
+    // For mock tokens, just check if they exist
+    return state.token.startsWith('mock-jwt-token-');
+  };
+
+  // Load user from stored data (no API)
+  const loadUser = () => {
     try {
-      console.log('🔍 AuthContext: Loading user data...');
-      const response = await api.get('/api/auth/me');
-      if (response.data.success) {
-        console.log('✅ AuthContext: User data loaded successfully:', response.data.user);
-        dispatch({
-          type: AUTH_ACTIONS.LOAD_USER,
-          payload: response.data.user,
-        });
-      } else {
-        console.log('❌ AuthContext: Failed to load user - API returned success: false');
-        logout();
+      // Validate token first
+      if (!validateToken()) {
+        return;
       }
+
+      // Create mock user based on token
+      const mockUser = {
+        id: '1',
+        name: 'Test User',
+        email: 'admin@example.com',
+        role: 'admin'
+      };
+
+      dispatch({
+        type: AUTH_ACTIONS.LOAD_USER,
+        payload: mockUser,
+      });
     } catch (error) {
-      console.error('❌ AuthContext: Failed to load user:', error);
-      if (error.response?.status === 401) {
-        console.log('🔒 AuthContext: Token expired or invalid, logging out...');
-        logout();
-      } else {
-        // Other errors, set loading to false but keep token
-        dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
-      }
+      console.error('Failed to load user:', error);
+      dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
     }
   };
 
-  // Login user
-  const login = async (email, password) => {
-    try {
-      console.log('🔐 AuthContext: Starting login process...');
-      dispatch({ type: AUTH_ACTIONS.LOGIN_START });
-      
-      console.log('🌐 AuthContext: Making API call to /api/auth/login...');
-      const response = await api.post('/api/auth/login', { email, password });
-      
-      console.log('📡 AuthContext: API response received:', response.data);
-      
-      if (response.data.success) {
-        const { user, token } = response.data;
-        
-        console.log('✅ AuthContext: Login successful, storing token and user data...');
-        console.log('👤 User:', user);
-        console.log('🔑 Token:', token ? `${token.substring(0, 20)}...` : 'No token');
-        
-        // Store token in localStorage
-        localStorage.setItem('token', token);
-        
-        dispatch({
-          type: AUTH_ACTIONS.LOGIN_SUCCESS,
-          payload: response.data,
-        });
-        
-        console.log('🎯 AuthContext: Dispatching LOGIN_SUCCESS, navigating to dashboard...');
-        toast.success('Login successful!');
-        navigate('/dashboard');
-      } else {
-        console.log('❌ AuthContext: Login failed - API returned success: false');
-        const errorMessage = response.data.error || 'Login failed';
-        dispatch({
-          type: AUTH_ACTIONS.LOGIN_FAILURE,
-          payload: errorMessage,
-        });
-        toast.error(errorMessage);
-        throw new Error(errorMessage);
-      }
-    } catch (error) {
-      console.error('💥 AuthContext: Login error caught:', error);
-      
-      let errorMessage = 'Login failed';
-      
-      if (error.response) {
-        // Server responded with error status
-        console.log('📡 AuthContext: Server error response:', error.response);
-        errorMessage = error.response.data?.error || `Server error: ${error.response.status}`;
-      } else if (error.request) {
-        // Request was made but no response received
-        console.log('🌐 AuthContext: Network error - no response received');
-        errorMessage = 'Network error - please check your connection';
-      } else {
-        // Something else happened
-        console.log('❓ AuthContext: Other error:', error.message);
-        errorMessage = error.message || 'Login failed';
-      }
-      
-      dispatch({
-        type: AUTH_ACTIONS.LOGIN_FAILURE,
-        payload: errorMessage,
-      });
-      toast.error(errorMessage);
-      throw new Error(errorMessage);
-    }
+  // Login user (mock authentication)
+  const login = (email, password) => {
+    dispatch({ type: AUTH_ACTIONS.LOGIN_START });
+
+    // Mock authentication - accept any email/password
+    const mockUser = {
+      id: '1',
+      name: 'Test User',
+      email: email,
+      role: 'admin'
+    };
+
+    const mockToken = 'mock-jwt-token-' + Date.now();
+
+    dispatch({
+      type: AUTH_ACTIONS.LOGIN_SUCCESS,
+      payload: { user: mockUser, token: mockToken },
+    });
+
+    toast.success('Login successful!');
+    navigate('/dashboard');
+    return true;
   };
 
-  // Register user
-  const register = async (userData) => {
-    try {
-      dispatch({ type: AUTH_ACTIONS.REGISTER_START });
-      
-      const response = await api.post('/api/auth/register', userData);
-      
-      if (response.data.success) {
-        dispatch({
-          type: AUTH_ACTIONS.REGISTER_SUCCESS,
-          payload: response.data,
-        });
-        
-        toast.success('Registration successful!');
-        navigate('/dashboard');
-      } else {
-        dispatch({
-          type: AUTH_ACTIONS.REGISTER_FAILURE,
-          payload: response.data.error,
-        });
-        toast.error(response.data.error);
-      }
-    } catch (error) {
-      const errorMessage = error.response?.data?.error || 'Registration failed';
-      dispatch({
-        type: AUTH_ACTIONS.REGISTER_FAILURE,
-        payload: errorMessage,
-      });
-      toast.error(errorMessage);
-    }
+  // Register user (mock registration)
+  const register = (userData) => {
+    dispatch({ type: AUTH_ACTIONS.REGISTER_START });
+
+    // Mock registration - accept any user data
+    const mockUser = {
+      id: Math.random().toString(),
+      name: userData.name,
+      email: userData.email,
+      role: userData.role || 'user'
+    };
+
+    const mockToken = 'mock-jwt-token-' + Date.now();
+
+    dispatch({
+      type: AUTH_ACTIONS.REGISTER_SUCCESS,
+      payload: { user: mockUser, token: mockToken },
+    });
+
+    toast.success('Registration successful!');
+    navigate('/dashboard');
+    return true;
   };
 
   // Logout user
-  const logout = async () => {
-    try {
-      if (state.token) {
-        await api.post('/api/auth/logout');
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      dispatch({ type: AUTH_ACTIONS.LOGOUT });
-      navigate('/login');
-      toast.success('Logged out successfully');
-    }
+  const logout = () => {
+    dispatch({ type: AUTH_ACTIONS.LOGOUT });
+    navigate('/login');
+    toast.success('Logged out successfully');
   };
 
   // Clear error

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { questionsData, getQuestionsByIds, getAllQuestions } from '../../data/questionsData';
 import {
   Box,
   Typography,
@@ -11,6 +13,7 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  DialogActions,
   IconButton,
   Chip,
   Alert,
@@ -35,6 +38,15 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Checkbox,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemIcon,
+  ListItemSecondaryAction,
+  Divider,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -44,26 +56,35 @@ import {
   Search as SearchIcon,
   ViewList as SectionIcon,
   QuestionAnswer as QuestionIcon,
-  Category as CategoryIcon,
-  Scale as WeightIcon,
   CheckCircle as CheckIcon,
   Warning as WarningIcon,
-  ExpandMore as ExpandMoreIcon,
   AddCircle as AddCircleIcon,
   RemoveCircle as RemoveCircleIcon,
+  FileCopy as CloneIcon,
+  Link as LinkIcon,
+  LinkOff as UnlinkIcon,
+  GridView as GridViewIcon,
+  TableRows as TableViewIcon,
+  Close as CloseIcon,
+  ArrowBack as BackIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
 } from '@mui/icons-material';
 import Layout from '../../components/Layout/Layout';
 
 const Sections = () => {
+  const navigate = useNavigate();
   const [sections, setSections] = useState([]);
   const [filteredSections, setFilteredSections] = useState([]);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [editingSection, setEditingSection] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [viewMode, setViewMode] = useState('table'); // 'table' or 'grid'
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(5); // Reduced from 10 to 5
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [selectedSection, setSelectedSection] = useState(null); // For detailed view
+  const [viewQuestionsDialog, setViewQuestionsDialog] = useState(false);
+  const [questionsDialogSection, setQuestionsDialogSection] = useState(null);
+  const [expandedPreview, setExpandedPreview] = useState(null);
 
   // Mock data - in real app, this would come from API
   const mockSections = [
@@ -71,91 +92,101 @@ const Sections = () => {
       id: 1,
       title: 'Database Security',
       description: 'Core security controls for database access and data protection',
-      category: 'Security',
-      weight: 8,
       status: 'active',
       questionCount: 12,
       createdAt: '2024-01-15',
       lastModified: '2024-01-20',
-      tags: ['database', 'security', 'access-control'],
-      questions: [
-        'Is database encryption enabled and properly configured?',
-        'Are database user accounts properly managed?',
-        'Is database access logged and monitored?'
-      ]
+      questionIds: [1, 3], // Reference to question IDs
+      priority: 'Critical',
+      completionRate: 85
     },
     {
       id: 2,
       title: 'Network Infrastructure',
       description: 'Network security, monitoring, and infrastructure controls',
-      category: 'Infrastructure',
-      weight: 7,
       status: 'active',
       questionCount: 15,
-      createdAt: '2024-01-10',
+      createdAt: '2024-01-12',
       lastModified: '2024-01-18',
-      tags: ['network', 'infrastructure', 'monitoring'],
-      questions: [
-        'Is network traffic monitored for suspicious activity?',
-        'Are firewalls properly configured and maintained?',
-        'Is network segmentation implemented?'
-      ]
+      questionIds: [7], // Reference to question IDs
+      priority: 'High',
+      completionRate: 92
     },
     {
       id: 3,
-      title: 'User Access Management',
-      description: 'User authentication, authorization, and access controls',
-      category: 'Access Control',
-      weight: 9,
+      title: 'Identity and Access Management',
+      description: 'User authentication, authorization, and access control policies',
       status: 'active',
       questionCount: 18,
-      createdAt: '2024-01-12',
+      createdAt: '2024-01-10',
       lastModified: '2024-01-19',
-      tags: ['access-control', 'authentication', 'users'],
-      questions: [
-        'Is multi-factor authentication implemented?',
-        'Are user accounts reviewed regularly?',
-        'Is privileged access properly controlled?'
-      ]
+      questionIds: [6], // Reference to question IDs
+      priority: 'Critical',
+      completionRate: 78
     },
     {
       id: 4,
-      title: 'Backup and Recovery',
-      description: 'Data backup procedures and disaster recovery planning',
-      category: 'Business Continuity',
-      weight: 6,
-      status: 'draft',
-      questionCount: 8,
+      title: 'Data Protection and Privacy',
+      description: 'Data classification, encryption, and privacy compliance measures',
+      status: 'active',
+      questionCount: 14,
       createdAt: '2024-01-08',
-      lastModified: '2024-01-15',
-      tags: ['backup', 'recovery', 'disaster-planning'],
-      questions: [
-        'Are backup procedures tested regularly?',
-        'Is disaster recovery plan documented?',
-        'Are backup locations secure?'
-      ]
+      lastModified: '2024-01-17',
+      questionIds: [8], // Reference to question IDs
+      priority: 'Critical',
+      completionRate: 89
     },
     {
       id: 5,
-      title: 'Compliance Monitoring',
-      description: 'Regulatory compliance and audit trail management',
-      category: 'Compliance',
-      weight: 5,
+      title: 'Incident Response and Recovery',
+      description: 'Incident handling, business continuity, and disaster recovery procedures',
       status: 'active',
-      questionCount: 10,
-      createdAt: '2024-01-14',
-      lastModified: '2024-01-21',
-      tags: ['compliance', 'audit', 'regulations'],
-      questions: [
-        'Are compliance requirements documented?',
-        'Is audit logging enabled and maintained?',
-        'Are compliance reports generated regularly?'
-      ]
+      questionCount: 11,
+      createdAt: '2024-01-06',
+      lastModified: '2024-01-16',
+      questionIds: [9], // Reference to question IDs
+      priority: 'High',
+      completionRate: 95
     },
+    {
+      id: 6,
+      title: 'Software Development Security',
+      description: 'Secure coding practices, code review, and application security',
+      status: 'active',
+      questionCount: 16,
+      createdAt: '2024-01-04',
+      lastModified: '2024-01-15',
+      questionIds: [5], // Reference to question IDs
+      priority: 'Medium',
+      completionRate: 72
+    },
+    {
+      id: 7,
+      title: 'Third-Party Risk Management',
+      description: 'Vendor assessment, contract security, and supply chain risk management',
+      status: 'active',
+      questionCount: 13,
+      createdAt: '2024-01-02',
+      lastModified: '2024-01-14',
+      questionIds: [10], // Reference to question IDs
+      priority: 'Medium',
+      completionRate: 81
+    },
+    {
+      id: 8,
+      title: 'Compliance and Governance',
+      description: 'Regulatory compliance, governance frameworks, and audit management',
+      status: 'active',
+      questionCount: 20,
+      createdAt: '2023-12-30',
+      lastModified: '2024-01-13',
+      questionIds: [2, 4], // Reference to question IDs
+      priority: 'High',
+      completionRate: 88
+    }
   ];
 
-  const categories = ['Security', 'Infrastructure', 'Access Control', 'Business Continuity', 'Compliance', 'Operations'];
-  const weightOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  // Removed categories and weightOptions as they are no longer needed
 
   useEffect(() => {
     setSections(mockSections);
@@ -164,63 +195,48 @@ const Sections = () => {
 
   useEffect(() => {
     filterSections();
-  }, [searchTerm, selectedCategory, sections]);
+  }, [searchTerm, sections]);
 
   const filterSections = () => {
     let filtered = sections.filter(section => {
       const matchesSearch = section.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           section.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           section.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-      
-      const matchesCategory = selectedCategory === 'all' || section.category === selectedCategory;
-      
-      return matchesSearch && matchesCategory;
+        section.description.toLowerCase().includes(searchTerm.toLowerCase());
+
+
+
+      return matchesSearch;
     });
-    
+
     setFilteredSections(filtered);
     setPage(0);
   };
 
-  const handleOpenDialog = (section = null) => {
-    setEditingSection(section);
-    setOpenDialog(true);
+  const handleCreateSection = () => {
+    navigate('/sections/create');
   };
 
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-    setEditingSection(null);
-  };
-
-  const handleSaveSection = (sectionData) => {
-    if (editingSection) {
-      // Update existing section
-      const updatedSections = sections.map(s => 
-        s.id === editingSection.id ? { ...s, ...sectionData, lastModified: new Date().toISOString().split('T')[0] } : s
-      );
-      setSections(updatedSections);
-      setSnackbar({ open: true, message: 'Section updated successfully!', severity: 'success' });
-    } else {
-      // Add new section
-      const newSection = {
-        id: Math.max(...sections.map(s => s.id)) + 1,
-        ...sectionData,
-        status: 'active',
-        questionCount: 0,
-        questions: [],
-        createdAt: new Date().toISOString().split('T')[0],
-        lastModified: new Date().toISOString().split('T')[0],
-        tags: sectionData.tags ? sectionData.tags.split(',').map(tag => tag.trim()) : [],
-      };
-      setSections([...sections, newSection]);
-      setSnackbar({ open: true, message: 'Section created successfully!', severity: 'success' });
-    }
-    handleCloseDialog();
+  const handleEditSection = (section) => {
+    // Navigate to edit page with section data
+    navigate('/sections/create', { state: { editingSection: section } });
   };
 
   const handleDeleteSection = (sectionId) => {
     const updatedSections = sections.filter(s => s.id !== sectionId);
     setSections(updatedSections);
     setSnackbar({ open: true, message: 'Section deleted successfully!', severity: 'success' });
+  };
+
+  const handleCloneSection = (section) => {
+    const clonedSection = {
+      ...section,
+      id: Math.max(...sections.map(s => s.id)) + 1,
+      title: `${section.title} (Copy)`,
+      createdAt: new Date().toISOString().split('T')[0],
+      lastModified: new Date().toISOString().split('T')[0],
+      completionRate: 0,
+    };
+    setSections([...sections, clonedSection]);
+    setSnackbar({ open: true, message: 'Section cloned successfully!', severity: 'success' });
   };
 
   const handleChangePage = (event, newPage) => {
@@ -241,101 +257,21 @@ const Sections = () => {
     }
   };
 
-  const getWeightColor = (weight) => {
-    if (weight >= 8) return 'error';
-    if (weight >= 6) return 'warning';
-    if (weight >= 4) return 'info';
-    return 'success';
+  // Handler for viewing questions in modal
+  const handleViewQuestions = (section) => {
+    setQuestionsDialogSection(section);
+    setViewQuestionsDialog(true);
   };
 
-  const SectionForm = ({ section, onSave, onCancel }) => {
-    const [formData, setFormData] = useState({
-      title: section?.title || '',
-      description: section?.description || '',
-      category: section?.category || '',
-      weight: section?.weight || 5,
-      tags: section?.tags ? section.tags.join(', ') : '',
-    });
-
-    const handleSubmit = (e) => {
-      e.preventDefault();
-      onSave(formData);
-    };
-
-    return (
-      <form onSubmit={handleSubmit}>
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Section Title"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              required
-              helperText="Enter a descriptive title for the section"
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Description"
-              multiline
-              rows={3}
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              required
-              helperText="Provide a detailed description of what this section covers"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth required>
-              <InputLabel>Category</InputLabel>
-              <Select
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                label="Category"
-              >
-                {categories.map(category => (
-                  <MenuItem key={category} value={category}>{category}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth required>
-              <InputLabel>Weight</InputLabel>
-              <Select
-                value={formData.weight}
-                onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
-                label="Weight"
-              >
-                {weightOptions.map(weight => (
-                  <MenuItem key={weight} value={weight}>
-                    {weight} - {weight === 1 ? 'Lowest' : weight === 10 ? 'Highest' : 'Medium'}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Tags"
-              value={formData.tags}
-              onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-              helperText="Enter tags separated by commas (e.g., security, database, access-control)"
-            />
-          </Grid>
-        </Grid>
-        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-          <Button onClick={onCancel}>Cancel</Button>
-          <Button type="submit" variant="contained">
-            {section ? 'Update Section' : 'Create Section'}
-          </Button>
-        </Box>
-      </form>
-    );
+  // Handler for closing questions dialog
+  const handleCloseQuestionsDialog = () => {
+    setViewQuestionsDialog(false);
+    setQuestionsDialogSection(null);
   };
+
+
+
+
 
   return (
     <Layout>
@@ -414,14 +350,14 @@ const Sections = () => {
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   <Avatar sx={{ bgcolor: 'warning.main', mr: 2 }}>
-                    <WeightIcon />
+                    <SectionIcon />
                   </Avatar>
                   <Box>
                     <Typography variant="h4" component="div" sx={{ fontWeight: 'bold' }}>
-                      {sections.reduce((total, s) => total + s.weight, 0)}
+                      {sections.length}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Total Weight
+                      Total Sections
                     </Typography>
                   </Box>
                 </Box>
@@ -430,252 +366,434 @@ const Sections = () => {
           </Grid>
         </Grid>
 
-        {/* Filters and Search */}
-        <Paper sx={{ p: 3, mb: 3 }}>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                placeholder="Search sections..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <FormControl fullWidth>
-                <InputLabel>Category</InputLabel>
-                <Select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  label="Category"
-                >
-                  <MenuItem value="all">All Categories</MenuItem>
-                  {categories.map(category => (
-                    <MenuItem key={category} value={category}>{category}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Button
-                fullWidth
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => handleOpenDialog()}
+        {/* Compact Header with Actions */}
+        <Paper sx={{ p: 2, mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+            <TextField
+              placeholder="Search sections..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              size="small"
+              sx={{ flexGrow: 1, minWidth: 200 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+            />
+
+            {/* View Mode Toggle */}
+            <Box sx={{ display: 'flex', border: 1, borderColor: 'divider', borderRadius: 1 }}>
+              <IconButton
+                size="small"
+                onClick={() => setViewMode('table')}
+                color={viewMode === 'table' ? 'primary' : 'default'}
               >
-                Add Section
-              </Button>
-            </Grid>
-          </Grid>
+                <TableViewIcon />
+              </IconButton>
+              <IconButton
+                size="small"
+                onClick={() => setViewMode('grid')}
+                color={viewMode === 'grid' ? 'primary' : 'default'}
+              >
+                <GridViewIcon />
+              </IconButton>
+            </Box>
+
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleCreateSection}
+              size="small"
+            >
+              Add Section
+            </Button>
+          </Box>
         </Paper>
 
-        {/* Sections Table */}
-        <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-          <TableContainer>
-            <Table stickyHeader>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Section</TableCell>
-                  <TableCell>Category</TableCell>
-                  <TableCell>Weight</TableCell>
-                  <TableCell>Questions</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Last Modified</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredSections
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((section) => (
-                  <TableRow key={section.id} hover>
-                    <TableCell>
-                      <Box>
-                        <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-                          {section.title}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                          {section.description}
-                        </Typography>
-                        <Box sx={{ mt: 1 }}>
-                          {section.tags.map((tag, index) => (
-                            <Chip
-                              key={index}
-                              label={tag}
-                              size="small"
-                              sx={{ mr: 0.5, mb: 0.5 }}
+        {/* Conditional Rendering: Table or Grid View */}
+        {viewMode === 'table' ? (
+          <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+            <TableContainer sx={{ maxHeight: 400 }}>
+              <Table stickyHeader size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Section</TableCell>
+                    <TableCell align="center">Questions</TableCell>
+                    <TableCell align="center">Priority</TableCell>
+                    <TableCell align="center">Progress</TableCell>
+                    <TableCell align="center">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filteredSections
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((section) => (
+                      <TableRow key={section.id} hover>
+                        <TableCell>
+                          <Box>
+                            <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+                              {section.title}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {section.description.substring(0, 60)}...
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell align="center">
+                          <Chip label={section.questionCount} size="small" />
+                        </TableCell>
+                        <TableCell align="center">
+                          <Chip
+                            label={section.priority}
+                            size="small"
+                            color={section.priority === 'Critical' ? 'error' : section.priority === 'High' ? 'warning' : 'info'}
+                          />
+                        </TableCell>
+                        <TableCell align="center">
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Typography variant="caption" sx={{ mr: 1 }}>
+                              {section.completionRate}%
+                            </Typography>
+                            <LinearProgress
+                              variant="determinate"
+                              value={section.completionRate}
+                              sx={{ width: 40, height: 4 }}
                             />
-                          ))}
+                          </Box>
+                        </TableCell>
+                        <TableCell align="center">
+                          <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
+                            <Tooltip title="View Questions">
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={() => handleViewQuestions(section)}
+                              >
+                                <ViewIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Edit">
+                              <IconButton
+                                size="small"
+                                onClick={() => handleEditSection(section)}
+                              >
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Clone">
+                              <IconButton
+                                size="small"
+                                onClick={() => handleCloneSection(section)}
+                              >
+                                <CloneIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Delete">
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={() => handleDeleteSection(section.id)}
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <TablePagination
+              rowsPerPageOptions={[5, 10, 15]}
+              component="div"
+              count={filteredSections.length}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              size="small"
+            />
+          </Paper>
+        ) : (
+          /* Grid View */
+          <Box>
+            <Grid container spacing={2}>
+              {filteredSections
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((section) => (
+                  <Grid item xs={12} sm={6} md={4} key={section.id}>
+                    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                      <CardContent sx={{ flexGrow: 1, p: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1 }}>
+                          <Typography variant="h6" component="h3" sx={{ fontSize: '1rem', fontWeight: 'medium' }}>
+                            {section.title}
+                          </Typography>
+                          <Chip
+                            label={section.priority}
+                            size="small"
+                            color={section.priority === 'Critical' ? 'error' : section.priority === 'High' ? 'warning' : 'info'}
+                          />
                         </Box>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={section.category}
-                        size="small"
-                        variant="outlined"
-                        icon={<CategoryIcon />}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={section.weight}
-                        size="small"
-                        color={getWeightColor(section.weight)}
-                        icon={<WeightIcon />}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Typography variant="body2" sx={{ mr: 1 }}>
-                          {section.questionCount}
+
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2, minHeight: '2.5em' }}>
+                          {section.description.substring(0, 100)}...
                         </Typography>
+
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <QuestionIcon sx={{ fontSize: 16 }} />
+                            <Typography variant="body2">{section.questionCount}</Typography>
+                          </Box>
+                          <Typography variant="body2" color="text.secondary">
+                            {section.completionRate}% complete
+                          </Typography>
+                        </Box>
+
                         <LinearProgress
                           variant="determinate"
-                          value={(section.questionCount / 20) * 100}
-                          sx={{ width: 60, height: 6, borderRadius: 3 }}
+                          value={section.completionRate}
+                          sx={{ height: 6, borderRadius: 3, mb: 2 }}
                         />
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={section.status}
-                        size="small"
-                        color={getStatusColor(section.status)}
-                        variant="outlined"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary">
-                        {section.lastModified}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Tooltip title="View Details">
-                          <IconButton size="small" color="primary">
-                            <ViewIcon />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Edit Section">
-                          <IconButton 
-                            size="small" 
-                            color="warning"
-                            onClick={() => handleOpenDialog(section)}
-                          >
-                            <EditIcon />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Delete Section">
-                          <IconButton 
-                            size="small" 
-                            color="error"
-                            onClick={() => handleDeleteSection(section.id)}
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
-                    </TableCell>
-                  </TableRow>
+
+                        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                          <Tooltip title="View Questions">
+                            <IconButton
+                              size="small"
+                              color="primary"
+                              onClick={() => handleViewQuestions(section)}
+                            >
+                              <ViewIcon />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Edit Section">
+                            <IconButton
+                              size="small"
+                              onClick={() => handleEditSection(section)}
+                            >
+                              <EditIcon />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Clone Section">
+                            <IconButton
+                              size="small"
+                              onClick={() => handleCloneSection(section)}
+                            >
+                              <CloneIcon />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Delete Section">
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => handleDeleteSection(section.id)}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
                 ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
-            component="div"
-            count={filteredSections.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-          />
-        </Paper>
+            </Grid>
 
-        {/* Section Details Accordion */}
-        <Box sx={{ mt: 3 }}>
-          <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
-            Section Details
-          </Typography>
-          {filteredSections.slice(0, 3).map((section) => (
-            <Accordion key={section.id} sx={{ mb: 1 }}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                  <SectionIcon sx={{ mr: 2, color: 'primary.main' }} />
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 'medium' }}>
-                      {section.title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {section.category} • Weight: {section.weight} • {section.questionCount} questions
-                    </Typography>
-                  </Box>
-                  <Chip
-                    label={section.status}
-                    size="small"
-                    color={getStatusColor(section.status)}
-                    sx={{ mr: 2 }}
-                  />
-                </Box>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Box>
-                  <Typography variant="body2" sx={{ mb: 2 }}>
-                    {section.description}
-                  </Typography>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Questions in this section:
-                  </Typography>
-                  <Box sx={{ pl: 2 }}>
-                    {section.questions.map((question, index) => (
-                      <Typography key={index} variant="body2" sx={{ mb: 1, display: 'flex', alignItems: 'center' }}>
-                        <QuestionIcon sx={{ fontSize: 16, mr: 1, color: 'text.secondary' }} />
-                        {question}
-                      </Typography>
-                    ))}
-                  </Box>
-                  <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
-                    {section.tags.map((tag, index) => (
-                      <Chip
-                        key={index}
-                        label={tag}
-                        size="small"
-                        variant="outlined"
-                      />
-                    ))}
-                  </Box>
-                </Box>
-              </AccordionDetails>
-            </Accordion>
-          ))}
-        </Box>
+            {/* Pagination for Grid View */}
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+              <TablePagination
+                rowsPerPageOptions={[6, 12, 18]}
+                component="div"
+                count={filteredSections.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+                size="small"
+              />
+            </Box>
+          </Box>
+        )}
 
-        {/* Add/Edit Dialog */}
+        {/* Questions View Dialog */}
         <Dialog
-          open={openDialog}
-          onClose={handleCloseDialog}
-          maxWidth="md"
+          open={viewQuestionsDialog}
+          onClose={handleCloseQuestionsDialog}
+          maxWidth="lg"
           fullWidth
+          PaperProps={{
+            sx: { minHeight: '70vh' }
+          }}
         >
           <DialogTitle>
-            {editingSection ? 'Edit Section' : 'Create New Section'}
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <QuestionIcon sx={{ mr: 2, color: 'primary.main' }} />
+                <Box>
+                  <Typography variant="h6" component="div">
+                    {questionsDialogSection?.title}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {getQuestionsByIds(questionsDialogSection?.questionIds || []).length} questions in this section
+                  </Typography>
+                </Box>
+              </Box>
+              <IconButton onClick={handleCloseQuestionsDialog}>
+                <CloseIcon />
+              </IconButton>
+            </Box>
           </DialogTitle>
           <DialogContent>
-            <SectionForm
-              section={editingSection}
-              onSave={handleSaveSection}
-              onCancel={handleCloseDialog}
-            />
+            {questionsDialogSection && (
+              <Box>
+                {/* Section Info */}
+                <Paper sx={{ p: 2, mb: 3, bgcolor: 'grey.50' }}>
+                  <Typography variant="body1" sx={{ mb: 1 }}>
+                    <strong>Description:</strong> {questionsDialogSection.description}
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                    <Chip
+                      label={`Priority: ${questionsDialogSection.priority}`}
+                      color={questionsDialogSection.priority === 'Critical' ? 'error' : questionsDialogSection.priority === 'High' ? 'warning' : 'info'}
+                      size="small"
+                    />
+                    <Chip
+                      label={`Progress: ${questionsDialogSection.completionRate}%`}
+                      color="success"
+                      size="small"
+                    />
+                    <Chip
+                      label={`Status: ${questionsDialogSection.status}`}
+                      color={getStatusColor(questionsDialogSection.status)}
+                      size="small"
+                    />
+                  </Box>
+                </Paper>
+
+                {/* Questions List */}
+                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <QuestionIcon sx={{ mr: 1 }} />
+                  All Questions ({getQuestionsByIds(questionsDialogSection.questionIds || []).length})
+                </Typography>
+
+                {getQuestionsByIds(questionsDialogSection.questionIds || []).length === 0 ? (
+                  <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'grey.50' }}>
+                    <QuestionIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+                    <Typography variant="h6" color="text.secondary" gutterBottom>
+                      No Questions Found
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      No questions have been assigned to this section yet.
+                    </Typography>
+                  </Paper>
+                ) : (
+                  <Grid container spacing={2}>
+                    {getQuestionsByIds(questionsDialogSection.questionIds || []).map((question, index) => (
+                      <Grid item xs={12} key={question.id}>
+                        <Card sx={{ '&:hover': { elevation: 4 } }}>
+                          <CardContent sx={{ p: 3 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
+                              <Typography variant="h6" component="div" sx={{ fontSize: '1.1rem', fontWeight: 'medium', flex: 1 }}>
+                                {index + 1}. {question.text}
+                              </Typography>
+                              <Box sx={{ display: 'flex', gap: 1, ml: 2 }}>
+                                <Chip
+                                  label={question.priority}
+                                  size="small"
+                                  color={question.priority === 'Critical' ? 'error' : question.priority === 'High' ? 'warning' : 'default'}
+                                />
+                                <Chip
+                                  label={question.category}
+                                  size="small"
+                                  variant="outlined"
+                                />
+                              </Box>
+                            </Box>
+
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                              {question.description}
+                            </Typography>
+
+                            <Grid container spacing={2}>
+                              <Grid item xs={12} sm={6}>
+                                <Typography variant="body2" sx={{ mb: 1 }}>
+                                  <strong>Evidence Required:</strong> {question.evidenceRequired}
+                                </Typography>
+                                <Typography variant="body2" sx={{ mb: 1 }}>
+                                  <strong>Type:</strong> {question.type}
+                                </Typography>
+                                {question.complianceFramework && (
+                                  <Typography variant="body2" sx={{ mb: 1 }}>
+                                    <strong>Compliance Framework:</strong> {question.complianceFramework}
+                                  </Typography>
+                                )}
+                              </Grid>
+                              <Grid item xs={12} sm={6}>
+                                {question.riskLevel && (
+                                  <Typography variant="body2" sx={{ mb: 1 }}>
+                                    <strong>Risk Level:</strong> {question.riskLevel}
+                                  </Typography>
+                                )}
+                                {question.expectedResponse && (
+                                  <Typography variant="body2" sx={{ mb: 1 }}>
+                                    <strong>Expected Response:</strong> {question.expectedResponse}
+                                  </Typography>
+                                )}
+                                <Typography variant="caption" color="text.secondary">
+                                  Created: {question.createdAt}
+                                </Typography>
+                              </Grid>
+                            </Grid>
+
+                            {question.options && question.options.length > 0 && (
+                              <Box sx={{ mt: 2 }}>
+                                <Typography variant="body2" sx={{ fontWeight: 'medium', mb: 1 }}>
+                                  Options:
+                                </Typography>
+                                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                  {question.options.map((option, optIndex) => (
+                                    <Chip
+                                      key={optIndex}
+                                      label={option}
+                                      size="small"
+                                      variant="outlined"
+                                      color="primary"
+                                    />
+                                  ))}
+                                </Box>
+                              </Box>
+                            )}
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+                )}
+              </Box>
+            )}
           </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={handleCloseQuestionsDialog} variant="outlined">
+              Close
+            </Button>
+            {questionsDialogSection && (
+              <Button
+                onClick={() => {
+                  handleCloseQuestionsDialog();
+                  handleEditSection(questionsDialogSection);
+                }}
+                variant="contained"
+                startIcon={<EditIcon />}
+              >
+                Edit Section
+              </Button>
+            )}
+          </DialogActions>
         </Dialog>
+
+
 
         {/* Snackbar */}
         <Snackbar

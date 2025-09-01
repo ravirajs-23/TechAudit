@@ -17,6 +17,8 @@ class QuestionRepository {
       );
 
       const validationErrors = question.validate();
+      console.log('Validation errors:', validationErrors);
+      console.log('Question data:', questionData);
       if (validationErrors.length > 0) {
         throw new Error(`Question validation failed: ${validationErrors.join(', ')}`);
       }

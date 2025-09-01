@@ -18,9 +18,73 @@ router.use(authenticateToken);
 // ===== QUESTION MANAGEMENT =====
 
 /**
- * @route   POST /api/questions
- * @desc    Create a new question
- * @access  Private (Admin/Auditor)
+ * @swagger
+ * /api/questions:
+ *   post:
+ *     summary: Create a new question
+ *     description: Create a new audit question with text, guidance, and evidence requirements
+ *     tags: [Questions]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/QuestionRequest'
+ *           example:
+ *             text: "Does the organization have a documented information security policy?"
+ *             guidance: "Look for a formal policy document that outlines security objectives and procedures"
+ *             evidenceRequired: "Yes"
+ *     responses:
+ *       201:
+ *         description: Question created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Question'
+ *             example:
+ *               success: true
+ *               data:
+ *                 id: "507f1f77bcf86cd799439011"
+ *                 text: "Does the organization have a documented information security policy?"
+ *                 guidance: "Look for a formal policy document that outlines security objectives and procedures"
+ *                 evidenceRequired: "Yes"
+ *                 createdAt: "2024-01-15T10:30:00.000Z"
+ *                 updatedAt: "2024-01-15T10:30:00.000Z"
+ *               message: "Question created successfully"
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               success: false
+ *               error: "Question text and evidence requirement are required"
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Forbidden - Insufficient permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/questions', requireAuditorOrAdmin, async (req, res) => {
   try {
@@ -63,9 +127,49 @@ router.post('/questions', requireAuditorOrAdmin, async (req, res) => {
 });
 
 /**
- * @route   GET /api/questions
- * @desc    Get all questions
- * @access  Private
+ * @swagger
+ * /api/questions:
+ *   get:
+ *     summary: Get all questions
+ *     description: Retrieve a list of all audit questions in the system
+ *     tags: [Questions]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Questions retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Question'
+ *             example:
+ *               success: true
+ *               data:
+ *                 - id: "507f1f77bcf86cd799439011"
+ *                   text: "Does the organization have a documented information security policy?"
+ *                   guidance: "Look for a formal policy document"
+ *                   evidenceRequired: "Yes"
+ *                   createdAt: "2024-01-15T10:30:00.000Z"
+ *               count: 1
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get('/questions', async (req, res) => {
   try {
@@ -84,9 +188,63 @@ router.get('/questions', async (req, res) => {
 });
 
 /**
- * @route   GET /api/questions/:id
- * @desc    Get question by ID
- * @access  Private
+ * @swagger
+ * /api/questions/{id}:
+ *   get:
+ *     summary: Get question by ID
+ *     description: Retrieve a specific audit question by its unique identifier
+ *     tags: [Questions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Question ID
+ *         example: "507f1f77bcf86cd799439011"
+ *     responses:
+ *       200:
+ *         description: Question retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Question'
+ *             example:
+ *               success: true
+ *               data:
+ *                 id: "507f1f77bcf86cd799439011"
+ *                 text: "Does the organization have a documented information security policy?"
+ *                 guidance: "Look for a formal policy document"
+ *                 evidenceRequired: "Yes"
+ *                 createdAt: "2024-01-15T10:30:00.000Z"
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Question not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               success: false
+ *               error: "Question not found"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get('/questions/:id', async (req, res) => {
   try {
@@ -111,9 +269,74 @@ router.get('/questions/:id', async (req, res) => {
 });
 
 /**
- * @route   PUT /api/questions/:id
- * @desc    Update a question
- * @access  Private (Admin/Auditor)
+ * @swagger
+ * /api/questions/{id}:
+ *   put:
+ *     summary: Update a question
+ *     description: Update an existing audit question's text, guidance, or evidence requirements
+ *     tags: [Questions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Question ID
+ *         example: "507f1f77bcf86cd799439011"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/QuestionRequest'
+ *           example:
+ *             text: "Does the organization have an updated information security policy?"
+ *             guidance: "Look for a recently reviewed formal policy document"
+ *             evidenceRequired: "Yes"
+ *     responses:
+ *       200:
+ *         description: Question updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Question'
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Forbidden - Insufficient permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Question not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.put('/questions/:id', requireAuditorOrAdmin, async (req, res) => {
   try {
@@ -164,9 +387,60 @@ router.put('/questions/:id', requireAuditorOrAdmin, async (req, res) => {
 });
 
 /**
- * @route   DELETE /api/questions/:id
- * @desc    Delete a question
- * @access  Private (Admin/Auditor)
+ * @swagger
+ * /api/questions/{id}:
+ *   delete:
+ *     summary: Delete a question
+ *     description: Permanently delete an audit question from the system
+ *     tags: [Questions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Question ID
+ *         example: "507f1f77bcf86cd799439011"
+ *     responses:
+ *       200:
+ *         description: Question deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Question deleted successfully"
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Forbidden - Insufficient permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Question not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.delete('/questions/:id', requireAuditorOrAdmin, async (req, res) => {
   try {
@@ -193,9 +467,40 @@ router.delete('/questions/:id', requireAuditorOrAdmin, async (req, res) => {
 });
 
 /**
- * @route   GET /api/questions/standalone
- * @desc    Get standalone questions (not linked to any section)
- * @access  Private
+ * @swagger
+ * /api/questions/standalone:
+ *   get:
+ *     summary: Get standalone questions
+ *     description: Retrieve all questions that are not linked to any section
+ *     tags: [Questions]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Standalone questions retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Question'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get('/questions/standalone', async (req, res) => {
   try {
@@ -214,9 +519,56 @@ router.get('/questions/standalone', async (req, res) => {
 });
 
 /**
- * @route   POST /api/questions/unlink
- * @desc    Unlink questions from sections (make them standalone)
- * @access  Private (Admin/Auditor)
+ * @swagger
+ * /api/questions/unlink:
+ *   post:
+ *     summary: Unlink questions from sections
+ *     description: Remove the association between questions and their sections, making them standalone
+ *     tags: [Questions]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/IdArrayRequest'
+ *           example:
+ *             questionIds: ["507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012"]
+ *     responses:
+ *       200:
+ *         description: Questions unlinked successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *             example:
+ *               success: true
+ *               message: "Questions unlinked from sections successfully"
+ *       400:
+ *         description: Validation error - Question IDs array is required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Forbidden - Insufficient permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/questions/unlink', requireAuditorOrAdmin, async (req, res) => {
   try {
@@ -245,9 +597,48 @@ router.post('/questions/unlink', requireAuditorOrAdmin, async (req, res) => {
 });
 
 /**
- * @route   GET /api/questions/section/:sectionId
- * @desc    Get questions by section
- * @access  Private
+ * @swagger
+ * /api/questions/section/{sectionId}:
+ *   get:
+ *     summary: Get questions by section
+ *     description: Retrieve all questions that belong to a specific section
+ *     tags: [Questions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: sectionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Section ID
+ *         example: "507f1f77bcf86cd799439011"
+ *     responses:
+ *       200:
+ *         description: Section questions retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Question'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get('/questions/section/:sectionId', async (req, res) => {
   try {
@@ -268,9 +659,60 @@ router.get('/questions/section/:sectionId', async (req, res) => {
 // ===== SECTION MANAGEMENT =====
 
 /**
- * @route   POST /api/sections
- * @desc    Create a new section
- * @access  Private (Admin/Auditor)
+ * @swagger
+ * /api/sections:
+ *   post:
+ *     summary: Create a new section
+ *     description: Create a new section for organizing audit questions
+ *     tags: [Sections]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/SectionRequest'
+ *           example:
+ *             title: "Security Policies"
+ *             description: "Questions related to organizational security policies"
+ *             weight: 5
+ *     responses:
+ *       201:
+ *         description: Section created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Section'
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Forbidden - Insufficient permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/sections', requireAuditorOrAdmin, async (req, res) => {
   try {
@@ -313,9 +755,40 @@ router.post('/sections', requireAuditorOrAdmin, async (req, res) => {
 });
 
 /**
- * @route   GET /api/sections
- * @desc    Get all sections
- * @access  Private
+ * @swagger
+ * /api/sections:
+ *   get:
+ *     summary: Get all sections
+ *     description: Retrieve a list of all sections in the system
+ *     tags: [Sections]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Sections retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Section'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get('/sections', async (req, res) => {
   try {
@@ -334,9 +807,52 @@ router.get('/sections', async (req, res) => {
 });
 
 /**
- * @route   GET /api/sections/:id
- * @desc    Get section by ID
- * @access  Private
+ * @swagger
+ * /api/sections/{id}:
+ *   get:
+ *     summary: Get section by ID
+ *     description: Retrieve a specific section by its unique identifier
+ *     tags: [Sections]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Section ID
+ *         example: "507f1f77bcf86cd799439011"
+ *     responses:
+ *       200:
+ *         description: Section retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Section'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Section not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get('/sections/:id', async (req, res) => {
   try {
@@ -361,9 +877,74 @@ router.get('/sections/:id', async (req, res) => {
 });
 
 /**
- * @route   PUT /api/sections/:id
- * @desc    Update a section
- * @access  Private (Admin/Auditor)
+ * @swagger
+ * /api/sections/{id}:
+ *   put:
+ *     summary: Update a section
+ *     description: Update an existing section's title, description, or weight
+ *     tags: [Sections]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Section ID
+ *         example: "507f1f77bcf86cd799439011"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/SectionRequest'
+ *           example:
+ *             title: "Updated Security Policies"
+ *             description: "Updated questions related to organizational security policies"
+ *             weight: 7
+ *     responses:
+ *       200:
+ *         description: Section updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Section'
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Forbidden - Insufficient permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Section not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.put('/sections/:id', requireAuditorOrAdmin, async (req, res) => {
   try {
@@ -413,9 +994,60 @@ router.put('/sections/:id', requireAuditorOrAdmin, async (req, res) => {
 });
 
 /**
- * @route   DELETE /api/sections/:id
- * @desc    Delete a section
- * @access  Private (Admin/Auditor)
+ * @swagger
+ * /api/sections/{id}:
+ *   delete:
+ *     summary: Delete a section
+ *     description: Permanently delete a section from the system
+ *     tags: [Sections]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Section ID
+ *         example: "507f1f77bcf86cd799439011"
+ *     responses:
+ *       200:
+ *         description: Section deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Section deleted successfully"
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Forbidden - Insufficient permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Section not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.delete('/sections/:id', requireAuditorOrAdmin, async (req, res) => {
   try {
@@ -442,9 +1074,48 @@ router.delete('/sections/:id', requireAuditorOrAdmin, async (req, res) => {
 });
 
 /**
- * @route   GET /api/sections/questionnaire/:questionnaireId
- * @desc    Get sections by questionnaire
- * @access  Private
+ * @swagger
+ * /api/sections/questionnaire/{questionnaireId}:
+ *   get:
+ *     summary: Get sections by questionnaire
+ *     description: Retrieve all sections that belong to a specific questionnaire
+ *     tags: [Sections]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: questionnaireId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Questionnaire ID
+ *         example: "507f1f77bcf86cd799439011"
+ *     responses:
+ *       200:
+ *         description: Questionnaire sections retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Section'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get('/sections/questionnaire/:questionnaireId', async (req, res) => {
   try {
@@ -465,9 +1136,60 @@ router.get('/sections/questionnaire/:questionnaireId', async (req, res) => {
 // ===== QUESTIONNAIRE MANAGEMENT =====
 
 /**
- * @route   POST /api/questionnaires
- * @desc    Create a new questionnaire
- * @access  Private (Admin/Auditor)
+ * @swagger
+ * /api/questionnaires:
+ *   post:
+ *     summary: Create a new questionnaire
+ *     description: Create a new questionnaire for organizing sections and questions
+ *     tags: [Questionnaires]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/QuestionnaireRequest'
+ *           example:
+ *             title: "Cloud Security Assessment"
+ *             version: "2.0"
+ *             description: "Comprehensive assessment for cloud infrastructure security"
+ *     responses:
+ *       201:
+ *         description: Questionnaire created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Questionnaire'
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Forbidden - Insufficient permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/questionnaires', requireAuditorOrAdmin, async (req, res) => {
   try {
@@ -501,9 +1223,40 @@ router.post('/questionnaires', requireAuditorOrAdmin, async (req, res) => {
 });
 
 /**
- * @route   GET /api/questionnaires
- * @desc    Get all questionnaires
- * @access  Private
+ * @swagger
+ * /api/questionnaires:
+ *   get:
+ *     summary: Get all questionnaires
+ *     description: Retrieve a list of all questionnaires in the system
+ *     tags: [Questionnaires]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Questionnaires retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Questionnaire'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get('/questionnaires', async (req, res) => {
   try {
@@ -522,9 +1275,52 @@ router.get('/questionnaires', async (req, res) => {
 });
 
 /**
- * @route   GET /api/questionnaires/:id
- * @desc    Get questionnaire by ID
- * @access  Private
+ * @swagger
+ * /api/questionnaires/{id}:
+ *   get:
+ *     summary: Get questionnaire by ID
+ *     description: Retrieve a specific questionnaire by its unique identifier
+ *     tags: [Questionnaires]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Questionnaire ID
+ *         example: "507f1f77bcf86cd799439011"
+ *     responses:
+ *       200:
+ *         description: Questionnaire retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Questionnaire'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Questionnaire not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get('/questionnaires/:id', async (req, res) => {
   try {
@@ -549,9 +1345,74 @@ router.get('/questionnaires/:id', async (req, res) => {
 });
 
 /**
- * @route   PUT /api/questionnaires/:id
- * @desc    Update a questionnaire
- * @access  Private (Admin/Auditor)
+ * @swagger
+ * /api/questionnaires/{id}:
+ *   put:
+ *     summary: Update a questionnaire
+ *     description: Update an existing questionnaire's title, version, or description
+ *     tags: [Questionnaires]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Questionnaire ID
+ *         example: "507f1f77bcf86cd799439011"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/QuestionnaireRequest'
+ *           example:
+ *             title: "Updated Cloud Security Assessment"
+ *             version: "2.1"
+ *             description: "Updated comprehensive assessment for cloud infrastructure security"
+ *     responses:
+ *       200:
+ *         description: Questionnaire updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Questionnaire'
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Forbidden - Insufficient permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Questionnaire not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.put('/questionnaires/:id', requireAuditorOrAdmin, async (req, res) => {
   try {
@@ -593,9 +1454,60 @@ router.put('/questionnaires/:id', requireAuditorOrAdmin, async (req, res) => {
 });
 
 /**
- * @route   DELETE /api/questionnaires/:id
- * @desc    Delete a questionnaire
- * @access  Private (Admin/Auditor)
+ * @swagger
+ * /api/questionnaires/{id}:
+ *   delete:
+ *     summary: Delete a questionnaire
+ *     description: Permanently delete a questionnaire from the system
+ *     tags: [Questionnaires]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Questionnaire ID
+ *         example: "507f1f77bcf86cd799439011"
+ *     responses:
+ *       200:
+ *         description: Questionnaire deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Questionnaire deleted successfully"
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Forbidden - Insufficient permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Questionnaire not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.delete('/questionnaires/:id', requireAuditorOrAdmin, async (req, res) => {
   try {
@@ -622,9 +1534,48 @@ router.delete('/questionnaires/:id', requireAuditorOrAdmin, async (req, res) => 
 });
 
 /**
- * @route   GET /api/questionnaires/technology/:technologyId
- * @desc    Get questionnaires by technology
- * @access  Private
+ * @swagger
+ * /api/questionnaires/technology/{technologyId}:
+ *   get:
+ *     summary: Get questionnaires by technology
+ *     description: Retrieve all questionnaires linked to a specific technology
+ *     tags: [Questionnaires]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: technologyId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Technology ID
+ *         example: "507f1f77bcf86cd799439011"
+ *     responses:
+ *       200:
+ *         description: Technology questionnaires retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Questionnaire'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get('/questionnaires/technology/:technologyId', async (req, res) => {
   try {
@@ -645,9 +1596,63 @@ router.get('/questionnaires/technology/:technologyId', async (req, res) => {
 // ===== TECHNOLOGY MANAGEMENT =====
 
 /**
- * @route   POST /api/technologies
- * @desc    Create a new technology
- * @access  Private (Admin/Auditor)
+ * @swagger
+ * /api/technologies:
+ *   post:
+ *     summary: Create a new technology
+ *     description: Create a new technology entry for audit tracking
+ *     tags: [Technologies]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/TechnologyRequest'
+ *           example:
+ *             name: "Microsoft Azure"
+ *             version: "2023"
+ *             vendor: "Microsoft"
+ *             category: "Cloud Platform"
+ *             riskLevel: "medium"
+ *             description: "Microsoft's cloud computing platform"
+ *     responses:
+ *       201:
+ *         description: Technology created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Technology'
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Forbidden - Insufficient permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/technologies', requireAuditorOrAdmin, async (req, res) => {
   try {
@@ -693,9 +1698,40 @@ router.post('/technologies', requireAuditorOrAdmin, async (req, res) => {
 });
 
 /**
- * @route   GET /api/technologies
- * @desc    Get all technologies
- * @access  Private
+ * @swagger
+ * /api/technologies:
+ *   get:
+ *     summary: Get all technologies
+ *     description: Retrieve a list of all technologies in the system
+ *     tags: [Technologies]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Technologies retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Technology'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get('/technologies', async (req, res) => {
   try {
@@ -714,9 +1750,52 @@ router.get('/technologies', async (req, res) => {
 });
 
 /**
- * @route   GET /api/technologies/:id
- * @desc    Get technology by ID
- * @access  Private
+ * @swagger
+ * /api/technologies/{id}:
+ *   get:
+ *     summary: Get technology by ID
+ *     description: Retrieve a specific technology by its unique identifier
+ *     tags: [Technologies]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Technology ID
+ *         example: "507f1f77bcf86cd799439011"
+ *     responses:
+ *       200:
+ *         description: Technology retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Technology'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Technology not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get('/technologies/:id', async (req, res) => {
   try {
@@ -741,9 +1820,77 @@ router.get('/technologies/:id', async (req, res) => {
 });
 
 /**
- * @route   PUT /api/technologies/:id
- * @desc    Update a technology
- * @access  Private (Admin/Auditor)
+ * @swagger
+ * /api/technologies/{id}:
+ *   put:
+ *     summary: Update a technology
+ *     description: Update an existing technology's information
+ *     tags: [Technologies]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Technology ID
+ *         example: "507f1f77bcf86cd799439011"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/TechnologyRequest'
+ *           example:
+ *             name: "Microsoft Azure"
+ *             version: "2024"
+ *             vendor: "Microsoft"
+ *             category: "Cloud Platform"
+ *             riskLevel: "high"
+ *             description: "Updated Microsoft's cloud computing platform"
+ *     responses:
+ *       200:
+ *         description: Technology updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       $ref: '#/components/schemas/Technology'
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Forbidden - Insufficient permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Technology not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.put('/technologies/:id', requireAuditorOrAdmin, async (req, res) => {
   try {
@@ -799,9 +1946,60 @@ router.put('/technologies/:id', requireAuditorOrAdmin, async (req, res) => {
 });
 
 /**
- * @route   DELETE /api/technologies/:id
- * @desc    Delete a technology
- * @access  Private (Admin/Auditor)
+ * @swagger
+ * /api/technologies/{id}:
+ *   delete:
+ *     summary: Delete a technology
+ *     description: Permanently delete a technology from the system
+ *     tags: [Technologies]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Technology ID
+ *         example: "507f1f77bcf86cd799439011"
+ *     responses:
+ *       200:
+ *         description: Technology deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Technology deleted successfully"
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Forbidden - Insufficient permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Technology not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.delete('/technologies/:id', requireAuditorOrAdmin, async (req, res) => {
   try {
@@ -830,9 +2028,70 @@ router.delete('/technologies/:id', requireAuditorOrAdmin, async (req, res) => {
 // ===== RELATIONSHIP MANAGEMENT =====
 
 /**
- * @route   POST /api/sections/:sectionId/questions
- * @desc    Add questions to a section
- * @access  Private (Admin/Auditor)
+ * @swagger
+ * /api/sections/{sectionId}/questions:
+ *   post:
+ *     summary: Add questions to a section
+ *     description: Link multiple questions to a specific section
+ *     tags: [Relationships]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: sectionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Section ID
+ *         example: "507f1f77bcf86cd799439011"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/IdArrayRequest'
+ *           example:
+ *             questionIds: ["507f1f77bcf86cd799439012", "507f1f77bcf86cd799439013"]
+ *     responses:
+ *       200:
+ *         description: Questions added to section successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *             example:
+ *               success: true
+ *               message: "Questions added to section successfully"
+ *       400:
+ *         description: Validation error - Question IDs array is required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Forbidden - Insufficient permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Section not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/sections/:sectionId/questions', requireAuditorOrAdmin, async (req, res) => {
   try {
@@ -872,9 +2131,70 @@ router.post('/sections/:sectionId/questions', requireAuditorOrAdmin, async (req,
 });
 
 /**
- * @route   POST /api/questionnaires/:questionnaireId/sections
- * @desc    Add sections to a questionnaire
- * @access  Private (Admin/Auditor)
+ * @swagger
+ * /api/questionnaires/{questionnaireId}/sections:
+ *   post:
+ *     summary: Add sections to a questionnaire
+ *     description: Link multiple sections to a specific questionnaire
+ *     tags: [Relationships]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: questionnaireId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Questionnaire ID
+ *         example: "507f1f77bcf86cd799439011"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/SectionIdArrayRequest'
+ *           example:
+ *             sectionIds: ["507f1f77bcf86cd799439012", "507f1f77bcf86cd799439013"]
+ *     responses:
+ *       200:
+ *         description: Sections added to questionnaire successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *             example:
+ *               success: true
+ *               message: "Sections added to questionnaire successfully"
+ *       400:
+ *         description: Validation error - Section IDs array is required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Forbidden - Insufficient permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Questionnaire not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/questionnaires/:questionnaireId/sections', requireAuditorOrAdmin, async (req, res) => {
   try {
@@ -914,9 +2234,70 @@ router.post('/questionnaires/:questionnaireId/sections', requireAuditorOrAdmin, 
 });
 
 /**
- * @route   POST /api/technologies/:technologyId/questionnaire
- * @desc    Link a questionnaire to a technology
- * @access  Private (Admin/Auditor)
+ * @swagger
+ * /api/technologies/{technologyId}/questionnaire:
+ *   post:
+ *     summary: Link a questionnaire to a technology
+ *     description: Associate a questionnaire with a specific technology
+ *     tags: [Relationships]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: technologyId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Technology ID
+ *         example: "507f1f77bcf86cd799439011"
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/QuestionnaireIdRequest'
+ *           example:
+ *             questionnaireId: "507f1f77bcf86cd799439012"
+ *     responses:
+ *       200:
+ *         description: Questionnaire linked to technology successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/SuccessResponse'
+ *             example:
+ *               success: true
+ *               message: "Questionnaire linked to technology successfully"
+ *       400:
+ *         description: Validation error - Questionnaire ID is required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Forbidden - Insufficient permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: Technology or questionnaire not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/technologies/:technologyId/questionnaire', requireAuditorOrAdmin, async (req, res) => {
   try {
@@ -966,9 +2347,63 @@ router.post('/technologies/:technologyId/questionnaire', requireAuditorOrAdmin, 
 // ===== UTILITY ENDPOINTS =====
 
 /**
- * @route   GET /api/structure
- * @desc    Get complete questionnaire structure for frontend
- * @access  Private
+ * @swagger
+ * /api/structure:
+ *   get:
+ *     summary: Get complete questionnaire structure
+ *     description: Retrieve the complete data structure including all questions, sections, questionnaires, and technologies for frontend consumption
+ *     tags: [Utilities]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Complete structure retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     questions:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Question'
+ *                     sections:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Section'
+ *                     questionnaires:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Questionnaire'
+ *                     technologies:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Technology'
+ *             example:
+ *               success: true
+ *               data:
+ *                 questions: []
+ *                 sections: []
+ *                 questionnaires: []
+ *                 technologies: []
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get('/structure', async (req, res) => {
   try {
