@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import dataPersistenceService from '../../services/dataPersistenceService';
 import {
     Box,
     Typography,
@@ -45,6 +46,68 @@ const QuestionnaireBuilderNew = () => {
     const [questionnaires, setQuestionnaires] = useState([]);
     const [technologies, setTechnologies] = useState([]);
 
+    // Load data from persistence service
+    useEffect(() => {
+        const loadData = () => {
+            try {
+                // Debug: Check localStorage directly
+                console.log('🔍 Checking localStorage directly:');
+                const sectionsFromStorage = localStorage.getItem('techAudit_sections');
+                console.log('🔍 Raw sections from localStorage:', sectionsFromStorage);
+                if (sectionsFromStorage) {
+                    const parsedSections = JSON.parse(sectionsFromStorage);
+                    console.log('🔍 Parsed sections from localStorage:', parsedSections);
+                    console.log('🔍 Parsed sections count:', parsedSections.length);
+                }
+
+                const persistedQuestions = dataPersistenceService.loadQuestions();
+                const persistedSections = dataPersistenceService.loadSections();
+                const persistedQuestionnaires = dataPersistenceService.loadQuestionnaires();
+                const persistedTechnologies = dataPersistenceService.loadTechnologies();
+
+                console.log('🔍 QuestionnaireBuilder loading data:');
+                console.log('🔍 Questions:', persistedQuestions.length);
+                console.log('🔍 Sections:', persistedSections.length);
+                console.log('🔍 Questionnaires:', persistedQuestionnaires.length);
+                console.log('🔍 Technologies:', persistedTechnologies.length);
+
+                // Debug: Log all sections to see what's actually loaded
+                console.log('🔍 All sections loaded:', persistedSections);
+                console.log('🔍 Section titles:', persistedSections.map(s => s.title));
+
+                setQuestions(persistedQuestions);
+                setSections(persistedSections);
+                setQuestionnaires(persistedQuestionnaires);
+                setTechnologies(persistedTechnologies);
+            } catch (err) {
+                console.error('❌ Error loading data in QuestionnaireBuilder:', err);
+            }
+        };
+
+        loadData();
+    }, []);
+
+    // Wrapper functions that update both local state and persistence service
+    const updateQuestions = (newQuestions) => {
+        setQuestions(newQuestions);
+        dataPersistenceService.saveQuestions(newQuestions);
+    };
+
+    const updateSections = (newSections) => {
+        setSections(newSections);
+        dataPersistenceService.saveSections(newSections);
+    };
+
+    const updateQuestionnaires = (newQuestionnaires) => {
+        setQuestionnaires(newQuestionnaires);
+        dataPersistenceService.saveQuestionnaires(newQuestionnaires);
+    };
+
+    const updateTechnologies = (newTechnologies) => {
+        setTechnologies(newTechnologies);
+        dataPersistenceService.saveTechnologies(newTechnologies);
+    };
+
     const steps = [
         {
             id: 'questions',
@@ -53,7 +116,7 @@ const QuestionnaireBuilderNew = () => {
             icon: <QuestionIcon />,
             color: 'primary',
             component: QuestionCreator,
-            props: { questions, setQuestions },
+            props: { questions, setQuestions: updateQuestions },
             dataCount: questions.length,
         },
         {
@@ -63,7 +126,7 @@ const QuestionnaireBuilderNew = () => {
             icon: <SectionIcon />,
             color: 'secondary',
             component: SectionBuilder,
-            props: { questions, sections, setSections },
+            props: { questions, sections, setSections: updateSections },
             dataCount: sections.length,
         },
         {
@@ -73,7 +136,7 @@ const QuestionnaireBuilderNew = () => {
             icon: <BuildIcon />,
             color: 'success',
             component: QuestionnaireAssembler,
-            props: { sections, questionnaires, setQuestionnaires },
+            props: { sections, questionnaires, setQuestionnaires: updateQuestionnaires },
             dataCount: questionnaires.length,
         },
         {
@@ -83,7 +146,7 @@ const QuestionnaireBuilderNew = () => {
             icon: <TechnologyIcon />,
             color: 'info',
             component: TechnologyConnector,
-            props: { questionnaires, technologies, setTechnologies },
+            props: { questionnaires, technologies, setTechnologies: updateTechnologies },
             dataCount: technologies.length,
         },
     ];
@@ -98,6 +161,31 @@ const QuestionnaireBuilderNew = () => {
 
     const handleStepClick = (step) => {
         setActiveStep(step);
+
+        // Reload data when switching steps to ensure we have the latest data
+        const loadData = () => {
+            try {
+                const persistedQuestions = dataPersistenceService.loadQuestions();
+                const persistedSections = dataPersistenceService.loadSections();
+                const persistedQuestionnaires = dataPersistenceService.loadQuestionnaires();
+                const persistedTechnologies = dataPersistenceService.loadTechnologies();
+
+                console.log('🔍 QuestionnaireBuilder reloading data on step change:');
+                console.log('🔍 Questions:', persistedQuestions.length);
+                console.log('🔍 Sections:', persistedSections.length);
+                console.log('🔍 Questionnaires:', persistedQuestionnaires.length);
+                console.log('🔍 Technologies:', persistedTechnologies.length);
+
+                setQuestions(persistedQuestions);
+                setSections(persistedSections);
+                setQuestionnaires(persistedQuestionnaires);
+                setTechnologies(persistedTechnologies);
+            } catch (err) {
+                console.error('❌ Error reloading data in QuestionnaireBuilder:', err);
+            }
+        };
+
+        loadData();
     };
 
     const handleSnackbar = (message, severity = 'success') => {

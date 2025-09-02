@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 
 const QuestionnaireAssembler = ({ sections, questionnaires, setQuestionnaires }) => {
+  console.log('🔍 QuestionnaireAssembler received sections:', sections);
+  console.log('🔍 Sections count:', sections?.length || 0);
+  
   const [formData, setFormData] = useState({
     title: '',
     version: '1.0',

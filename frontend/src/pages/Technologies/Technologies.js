@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { technologiesData as mockTechnologies, technologyCategories } from '../../data/technologiesData';
+import { questionnairesData as mockQuestionnaires } from '../../data/questionnairesData';
+import dataPersistenceService from '../../services/dataPersistenceService';
 import {
   Box,
   Typography,
@@ -57,6 +60,7 @@ import Layout from '../../components/Layout/Layout';
 
 const Technologies = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [technologies, setTechnologies] = useState([]);
   const [filteredTechnologies, setFilteredTechnologies] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -66,312 +70,34 @@ const Technologies = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [questionnaires, setQuestionnaires] = useState([]);
 
-  // Mock questionnaires data
-  const mockQuestionnaires = [
-    {
-      id: 1,
-      title: 'Database Security Assessment',
-      description: 'Comprehensive security evaluation for database systems',
-      questionCount: 25,
-      category: 'Database',
-      estimatedTime: '45 minutes',
-      status: 'active'
-    },
-    {
-      id: 2,
-      title: 'Identity Management Audit',
-      description: 'Authentication and authorization systems review',
-      questionCount: 18,
-      category: 'Identity Management',
-      estimatedTime: '30 minutes',
-      status: 'active'
-    },
-    {
-      id: 3,
-      title: 'Web Server Security Check',
-      description: 'Security configuration and vulnerability assessment',
-      questionCount: 22,
-      category: 'Web Server',
-      estimatedTime: '35 minutes',
-      status: 'active'
-    },
-    {
-      id: 4,
-      title: 'Network Security Review',
-      description: 'Firewall and network infrastructure evaluation',
-      questionCount: 30,
-      category: 'Network Security',
-      estimatedTime: '50 minutes',
-      status: 'active'
-    },
-    {
-      id: 5,
-      title: 'Virtualization Platform Audit',
-      description: 'Virtual infrastructure security assessment',
-      questionCount: 20,
-      category: 'Virtualization',
-      estimatedTime: '40 minutes',
-      status: 'active'
-    },
-    {
-      id: 6,
-      title: 'Container Security Assessment',
-      description: 'Container orchestration and security evaluation',
-      questionCount: 28,
-      category: 'Container Orchestration',
-      estimatedTime: '45 minutes',
-      status: 'active'
-    }
-  ];
-
   // Mock data - in real app, this would come from API
-  const mockTechnologies = [
-    {
-      id: 1,
-      name: 'Oracle Database 19c',
-      version: '19.3.0.0.0',
-      category: 'Database',
-      description: 'Enterprise database management system with advanced security features and comprehensive audit capabilities',
-      status: 'active',
-      assignedQuestionnaireId: 1, // One-to-one mapping
-      lastUpdated: '2024-01-20',
-      securityScore: 8.5,
-      complianceStatus: 'Compliant',
-      questionnaireCount: 3,
-      auditCount: 8,
-
-      features: [
-        'Advanced Security Options',
-        'Transparent Data Encryption',
-        'Database Vault',
-        'Audit Logging',
-        'Role-Based Access Control'
-      ],
-      risks: [
-        'Complex configuration management',
-        'High licensing costs',
-        'Requires specialized expertise',
-        'Performance impact of security features'
-      ],
-      vulnerabilities: [
-        'CVE-2023-21980 (Medium)',
-        'CVE-2023-21955 (Low)'
-      ],
-      lastAuditDate: '2024-01-15',
-      nextAuditDue: '2024-04-15'
-    },
-    {
-      id: 2,
-      name: 'Microsoft Active Directory',
-      version: '2019',
-      category: 'Identity Management',
-      description: 'Centralized directory service for Windows domain networks providing authentication and authorization',
-      status: 'active',
-      assignedQuestionnaireId: 2, // One-to-one mapping
-      lastUpdated: '2024-01-18',
-      securityScore: 7.8,
-      complianceStatus: 'Compliant',
-      questionnaireCount: 2,
-      auditCount: 12,
-
-      features: [
-        'Kerberos Authentication',
-        'Group Policy Management',
-        'LDAP Services',
-        'Certificate Services',
-        'Federation Services'
-      ],
-      risks: [
-        'Single point of failure',
-        'Privilege escalation vulnerabilities',
-        'Complex delegation model',
-        'Lateral movement risks'
-      ],
-      vulnerabilities: [
-        'CVE-2023-28252 (High)',
-        'CVE-2023-28229 (Medium)'
-      ],
-      lastAuditDate: '2024-01-10',
-      nextAuditDue: '2024-04-10'
-    },
-    {
-      id: 3,
-      name: 'Apache Web Server',
-      version: '2.4.54',
-      category: 'Web Server',
-      description: 'Open-source HTTP server for modern operating systems including UNIX and Windows',
-      status: 'active',
-      assignedQuestionnaireId: 3, // One-to-one mapping
-      lastUpdated: '2024-01-16',
-      securityScore: 8.2,
-      complianceStatus: 'Compliant',
-      questionnaireCount: 1,
-      auditCount: 5,
-
-      features: [
-        'SSL/TLS Support',
-        'Virtual Hosting',
-        'URL Rewriting',
-        'Load Balancing',
-        'Security Modules'
-      ],
-      risks: [
-        'Misconfigurations common',
-        'Module vulnerabilities',
-        'DDoS attack target',
-        'Log file management issues'
-      ],
-      vulnerabilities: [
-        'CVE-2023-25690 (Medium)',
-        'CVE-2023-27522 (Low)'
-      ],
-      lastAuditDate: '2024-01-08',
-      nextAuditDue: '2024-04-08'
-    },
-    {
-      id: 4,
-      name: 'Cisco ASA Firewall',
-      version: '9.16.4',
-      category: 'Network Security',
-      description: 'Adaptive Security Appliance providing firewall, VPN, and intrusion prevention capabilities',
-      status: 'active',
-      assignedQuestionnaireId: 4, // One-to-one mapping
-      lastUpdated: '2024-01-14',
-      securityScore: 8.7,
-      complianceStatus: 'Compliant',
-      questionnaireCount: 2,
-      auditCount: 6,
-
-      features: [
-        'Stateful Packet Inspection',
-        'VPN Gateway',
-        'Intrusion Prevention',
-        'Application Control',
-        'Identity-Based Policies'
-      ],
-      risks: [
-        'Complex rule management',
-        'Firmware vulnerabilities',
-        'Configuration drift',
-        'Performance bottlenecks'
-      ],
-      vulnerabilities: [
-        'CVE-2023-20269 (High)',
-        'CVE-2023-20185 (Medium)'
-      ],
-      lastAuditDate: '2024-01-12',
-      nextAuditDue: '2024-04-12'
-    },
-    {
-      id: 5,
-      name: 'VMware vSphere',
-      version: '7.0 U3',
-      category: 'Virtualization',
-      description: 'Enterprise virtualization platform for building cloud infrastructures',
-      status: 'active',
-      assignedQuestionnaireId: 5, // One-to-one mapping
-      lastUpdated: '2024-01-13',
-      securityScore: 8.0,
-      complianceStatus: 'Needs Review',
-      questionnaireCount: 3,
-      auditCount: 7,
-
-      features: [
-        'Virtual Machine Management',
-        'Resource Pooling',
-        'High Availability',
-        'Distributed Resource Scheduler',
-        'vMotion Technology'
-      ],
-      risks: [
-        'VM escape vulnerabilities',
-        'Hypervisor attacks',
-        'Resource contention',
-        'Complex licensing model'
-      ],
-      vulnerabilities: [
-        'CVE-2023-20867 (Critical)',
-        'CVE-2023-20900 (High)'
-      ],
-      lastAuditDate: '2024-01-05',
-      nextAuditDue: '2024-04-05'
-    },
-    {
-      id: 6,
-      name: 'MongoDB Enterprise',
-      version: '6.0.3',
-      category: 'Database',
-      description: 'Document-oriented NoSQL database with enterprise security and management features',
-      status: 'active',
-      assignedQuestionnaireId: null, // No questionnaire assigned yet
-      lastUpdated: '2024-01-11',
-      securityScore: 7.9,
-      complianceStatus: 'Compliant',
-      questionnaireCount: 2,
-      auditCount: 4,
-
-      features: [
-        'RBAC Authorization',
-        'Field-Level Encryption',
-        'Audit Logging',
-        'LDAP Integration',
-        'Kerberos Authentication'
-      ],
-      risks: [
-        'Exposed default configurations',
-        'NoSQL injection attacks',
-        'Insufficient access controls',
-        'Data consistency challenges'
-      ],
-      vulnerabilities: [
-        'CVE-2023-1409 (Medium)'
-      ],
-      lastAuditDate: '2024-01-09',
-      nextAuditDue: '2024-04-09'
-    },
-    {
-      id: 7,
-      name: 'Kubernetes',
-      version: '1.25.4',
-      category: 'Container Orchestration',
-      description: 'Open-source container orchestration platform for automating deployment and management',
-      status: 'active',
-      assignedQuestionnaireId: 6, // One-to-one mapping
-      lastUpdated: '2024-01-17',
-      securityScore: 7.6,
-      complianceStatus: 'Needs Review',
-      questionnaireCount: 4,
-      auditCount: 9,
-
-      features: [
-        'Pod Security Standards',
-        'Network Policies',
-        'RBAC',
-        'Secrets Management',
-        'Service Mesh Integration'
-      ],
-      risks: [
-        'Misconfured RBAC',
-        'Insecure container images',
-        'Network policy gaps',
-        'Secrets management issues'
-      ],
-      vulnerabilities: [
-        'CVE-2023-2727 (High)',
-        'CVE-2023-2728 (Medium)'
-      ],
-      lastAuditDate: '2024-01-07',
-      nextAuditDue: '2024-04-07'
-    }
-  ];
-
   const categories = ['Database', 'Identity Management', 'Web Server', 'Network Security', 'Virtualization', 'Container Orchestration'];
 
+  const loadData = () => {
+    try {
+      const persistedTechnologies = dataPersistenceService.loadTechnologies();
+      const persistedQuestionnaires = dataPersistenceService.loadQuestionnaires();
+
+      setTechnologies(persistedTechnologies);
+      setFilteredTechnologies(persistedTechnologies);
+      setQuestionnaires(persistedQuestionnaires);
+    } catch (err) {
+      console.error('❌ Error loading data:', err);
+      // Fallback to mock data if persistence fails
+      setTechnologies(mockTechnologies);
+      setFilteredTechnologies(mockTechnologies);
+      setQuestionnaires(mockQuestionnaires);
+    }
+  };
+
   useEffect(() => {
-    setTechnologies(mockTechnologies);
-    setFilteredTechnologies(mockTechnologies);
-    setQuestionnaires(mockQuestionnaires);
+    loadData();
   }, []);
+
+  // Reload data when navigating back to this page
+  useEffect(() => {
+    loadData();
+  }, [location.pathname]);
 
   useEffect(() => {
     filterTechnologies();

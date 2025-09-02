@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Grid,
@@ -34,6 +34,17 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import Layout from '../../components/Layout/Layout';
+import {
+  dashboardStats,
+  recentAudits,
+  securityMetrics,
+  upcomingTasks,
+  quickActions,
+  getStatusConfig,
+  getPriorityColor
+} from '../../data/dashboardData';
+import dataPersistenceService from '../../services/dataPersistenceService';
+import DataManagementDialog from '../../components/DataManagement/DataManagementDialog';
 
 const Dashboard = () => {
   const { user, isAdmin, isAuthenticated } = useAuth();
@@ -43,170 +54,50 @@ const Dashboard = () => {
   console.log('🔍 Is Admin:', isAdmin);
 
   // Mock data - in real app, this would come from API
-  const stats = {
-    totalAudits: 47,
-    completedAudits: 32,
-    pendingAudits: 9,
-    overdueAudits: 6,
-    completionRate: 68,
-    totalTechnologies: 15,
-    criticalVulnerabilities: 3,
-    complianceScore: 85
-  };
+  const stats = dashboardStats;
 
-  const recentAudits = [
-    {
-      id: 1,
-      name: 'Oracle Database Security Assessment',
-      technology: 'Oracle Database 19c',
-      status: 'completed',
-      auditor: 'Sarah Johnson',
-      completedDate: '2024-01-20',
-      progress: 100,
-      score: 8.5,
-      findings: 3,
-      priority: 'High'
-    },
-    {
-      id: 2,
-      name: 'Active Directory Infrastructure Review',
-      technology: 'Microsoft Active Directory',
-      status: 'in-progress',
-      auditor: 'Michael Chen',
-      startDate: '2024-01-18',
-      progress: 65,
-      score: 7.8,
-      findings: 5,
-      priority: 'Critical'
-    },
-    {
-      id: 3,
-      name: 'Kubernetes Security Configuration Audit',
-      technology: 'Kubernetes',
-      status: 'in-progress',
-      auditor: 'Emily Rodriguez',
-      startDate: '2024-01-17',
-      progress: 40,
-      score: 7.2,
-      findings: 8,
-      priority: 'High'
-    },
-    {
-      id: 4,
-      name: 'Apache Web Server Security Review',
-      technology: 'Apache Web Server',
-      status: 'pending',
-      auditor: 'David Wilson',
-      scheduledDate: '2024-01-25',
-      progress: 0,
-      priority: 'Medium'
-    },
-    {
-      id: 5,
-      name: 'VMware vSphere Infrastructure Assessment',
-      technology: 'VMware vSphere',
-      status: 'overdue',
-      auditor: 'Lisa Thompson',
-      dueDate: '2024-01-15',
-      progress: 25,
-      score: 6.8,
-      findings: 12,
-      priority: 'Critical'
-    },
-    {
-      id: 6,
-      name: 'MongoDB Security Configuration Review',
-      technology: 'MongoDB Enterprise',
-      status: 'completed',
-      auditor: 'Robert Kim',
-      completedDate: '2024-01-16',
-      progress: 100,
-      score: 7.9,
-      findings: 2,
-      priority: 'Medium'
-    }
-  ];
+  // Load data from persistence service for real-time stats
+  const [realTimeStats, setRealTimeStats] = useState(stats);
+  const [dataManagementOpen, setDataManagementOpen] = useState(false);
 
-  const securityMetrics = {
-    vulnerabilityTrends: [
-      { month: 'Sep', high: 8, medium: 15, low: 12 },
-      { month: 'Oct', high: 6, medium: 18, low: 10 },
-      { month: 'Nov', high: 4, medium: 12, low: 8 },
-      { month: 'Dec', high: 5, medium: 16, low: 14 },
-      { month: 'Jan', high: 3, medium: 11, low: 9 }
-    ],
-    complianceByCategory: [
-      { category: 'Database Security', score: 85, total: 12 },
-      { category: 'Network Infrastructure', score: 92, total: 15 },
-      { category: 'Identity Management', score: 78, total: 18 },
-      { category: 'Data Protection', score: 89, total: 14 },
-      { category: 'Incident Response', score: 95, total: 11 }
-    ],
-    riskDistribution: [
-      { level: 'Critical', count: 3, percentage: 15 },
-      { level: 'High', count: 8, percentage: 40 },
-      { level: 'Medium', count: 7, percentage: 35 },
-      { level: 'Low', count: 2, percentage: 10 }
-    ]
-  };
+  useEffect(() => {
+    const loadRealTimeStats = () => {
+      try {
+        const technologies = dataPersistenceService.loadTechnologies();
+        const questions = dataPersistenceService.loadQuestions();
+        const sections = dataPersistenceService.loadSections();
 
-  const upcomingTasks = [
-    {
-      id: 1,
-      task: 'Quarterly Firewall Rule Review',
-      technology: 'Cisco ASA Firewall',
-      dueDate: '2024-01-30',
-      priority: 'High',
-      assignee: 'Security Team'
-    },
-    {
-      id: 2,
-      task: 'SSL Certificate Renewal',
-      technology: 'Apache Web Server',
-      dueDate: '2024-02-05',
-      priority: 'Critical',
-      assignee: 'Infrastructure Team'
-    },
-    {
-      id: 3,
-      task: 'User Access Review',
-      technology: 'Microsoft Active Directory',
-      dueDate: '2024-02-10',
-      priority: 'Medium',
-      assignee: 'Identity Team'
-    },
-    {
-      id: 4,
-      task: 'Backup Recovery Test',
-      technology: 'Oracle Database 19c',
-      dueDate: '2024-02-15',
-      priority: 'High',
-      assignee: 'Database Team'
-    }
-  ];
+        // Calculate real-time stats
+        const updatedStats = {
+          ...stats,
+          totalTechnologies: technologies.length,
+          totalQuestions: questions.length,
+          totalSections: sections.length,
+        };
 
-  const quickActions = [
-    { title: 'New Audit', icon: <AddIcon />, color: 'primary', path: '/audits' },
-    { title: 'Create Question', icon: <AddIcon />, color: 'secondary', path: '/questions' },
-    { title: 'Build Questionnaire', icon: <AddIcon />, color: 'success', path: '/builder' },
-    { title: 'Add Technology', icon: <AddIcon />, color: 'info', path: '/technologies' },
-  ];
-
-  const getStatusChip = (status) => {
-    const statusConfig = {
-      completed: { color: 'success', icon: <CheckCircleIcon />, label: 'COMPLETED' },
-      'in-progress': { color: 'warning', icon: <ScheduleIcon />, label: 'IN PROGRESS' },
-      pending: { color: 'info', icon: <ScheduleIcon />, label: 'PENDING' },
-      overdue: { color: 'error', icon: <WarningIcon />, label: 'OVERDUE' },
+        setRealTimeStats(updatedStats);
+      } catch (err) {
+        console.error('❌ Error loading real-time stats:', err);
+        // Keep using default stats if persistence fails
+      }
     };
 
-    const config = statusConfig[status] || statusConfig.pending;
+    loadRealTimeStats();
+  }, []);
 
+  const getStatusChip = (status) => {
+    const statusConfig = getStatusConfig(status);
+    const iconMap = {
+      'CheckCircleIcon': <CheckCircleIcon />,
+      'ScheduleIcon': <ScheduleIcon />,
+      'WarningIcon': <WarningIcon />,
+      'InfoIcon': <ErrorIcon />
+    };
     return (
       <Chip
-        icon={config.icon}
-        label={config.label}
-        color={config.color}
+        icon={iconMap[statusConfig.icon]}
+        label={statusConfig.label}
+        color={statusConfig.color}
         size="small"
         variant="outlined"
       />
@@ -323,6 +214,10 @@ const Dashboard = () => {
       window.location.href = action.path;
     };
 
+    const iconMap = {
+      'AddIcon': <AddIcon />
+    };
+
     return (
       <Card
         sx={{
@@ -338,7 +233,7 @@ const Dashboard = () => {
       >
         <CardContent sx={{ textAlign: 'center', py: 3 }}>
           <Avatar sx={{ bgcolor: `${action.color}.main`, mx: 'auto', mb: 2, width: 56, height: 56 }}>
-            {action.icon}
+            {iconMap[action.icon]}
           </Avatar>
           <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
             {action.title}
@@ -349,219 +244,236 @@ const Dashboard = () => {
   };
 
   return (
-    <Layout>
-      <Box sx={{ flexGrow: 1 }}>
-        {/* Debug Section - Remove in production */}
-        <Box sx={{ mb: 4, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
-          <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: 'error.main' }}>
-            🐛 Debug Information (Remove in Production)
-          </Typography>
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
-              <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-                <strong>Auth State:</strong><br />
-                • isAuthenticated: {String(isAuthenticated)}<br />
-                • hasUser: {String(!!user)}<br />
-                • hasToken: {String(!!localStorage.getItem('token'))}<br />
-                • User Role: {user?.role || 'N/A'}<br />
-                • User ID: {user?.id || 'N/A'}
-              </Typography>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-                <strong>Current Route:</strong><br />
-                • Path: {window.location.pathname}<br />
-                • Hash: {window.location.hash}<br />
-                • Search: {window.location.search}
-              </Typography>
-            </Grid>
-          </Grid>
-          <Box sx={{ mt: 2 }}>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={() => {
-                console.log('🔍 Current auth state:', { isAuthenticated, user, token: localStorage.getItem('token') });
-                console.log('🔍 Current route:', window.location.pathname);
-                alert('Check console for debug info');
-              }}
-            >
-              Log Auth State to Console
-            </Button>
-          </Box>
-        </Box>
-
-        {/* Welcome Section */}
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
-            Welcome back, {user?.firstName || 'User'}! 👋
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Here's what's happening with your tech audits today.
-          </Typography>
-        </Box>
-
-        {/* Stats Cards */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <StatCard
-              title="Total Audits"
-              value={stats.totalAudits}
-              icon={<AssessmentIcon />}
-              color="primary.main"
-              subtitle="All time"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <StatCard
-              title="Completed"
-              value={stats.completedAudits}
-              icon={<CheckCircleIcon />}
-              color="success.main"
-              subtitle={`${stats.completionRate}% success rate`}
-              trend="+12% this month"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <StatCard
-              title="In Progress"
-              value={stats.pendingAudits}
-              icon={<ScheduleIcon />}
-              color="warning.main"
-              subtitle="Currently active"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <StatCard
-              title="Overdue"
-              value={stats.overdueAudits}
-              icon={<ErrorIcon />}
-              color="error.main"
-              subtitle="Requires attention"
-            />
-          </Grid>
-        </Grid>
-
-        {/* Quick Actions */}
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 'bold', mb: 2 }}>
-            Quick Actions
-          </Typography>
-
-          {/* Test Navigation Button */}
-          <Box sx={{ mb: 2 }}>
-            <Button
-              variant="outlined"
-              onClick={() => {
-                console.log('🧪 Test navigation button clicked');
-                alert('Test button clicked! Navigating to Questions...');
-                window.location.href = '/questions';
-              }}
-              sx={{ mr: 2 }}
-            >
-              🧪 Test Navigate to Questions
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={() => {
-                console.log('🧪 Test navigation button clicked');
-                alert('Test button clicked! Navigating to Dashboard...');
-                window.location.href = '/dashboard';
-              }}
-            >
-              🧪 Test Back to Dashboard
-            </Button>
-            <Button
-              variant="contained"
-              color="error"
-              onClick={() => {
-                alert('Simple test button works!');
-                console.log('✅ Simple test button clicked');
-              }}
-            >
-              🧪 Simple Test
-            </Button>
-          </Box>
-
-          <Grid container spacing={2}>
-            {console.log('🔍 Rendering quickActions:', quickActions)}
-            {quickActions.map((action, index) => {
-              console.log('🔍 Rendering action:', action, 'at index:', index);
-              return (
-                <Grid item xs={6} sm={3} key={index}>
-                  <QuickActionCard action={action} />
-                </Grid>
-              );
-            })}
-          </Grid>
-        </Box>
-
-        {/* Recent Audits */}
-        <Box sx={{ mb: 4 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h5" component="h2" sx={{ fontWeight: 'bold' }}>
-              Recent Audits
+    <>
+      <Layout>
+        <Box sx={{ flexGrow: 1 }}>
+          {/* Debug Section - Remove in production */}
+          <Box sx={{ mb: 4, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: 'error.main' }}>
+              🐛 Debug Information (Remove in Production)
             </Typography>
-            <Button variant="outlined" startIcon={<AddIcon />}>
-              New Audit
-            </Button>
-          </Box>
-          <Grid container spacing={3}>
-            {recentAudits.map((audit) => (
-              <Grid item xs={12} sm={6} md={6} lg={3} key={audit.id}>
-                <AuditCard audit={audit} />
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                  <strong>Auth State:</strong><br />
+                  • isAuthenticated: {String(isAuthenticated)}<br />
+                  • hasUser: {String(!!user)}<br />
+                  • hasToken: {String(!!localStorage.getItem('token'))}<br />
+                  • User Role: {user?.role || 'N/A'}<br />
+                  • User ID: {user?.id || 'N/A'}
+                </Typography>
               </Grid>
-            ))}
-          </Grid>
-        </Box>
+              <Grid item xs={12} md={6}>
+                <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                  <strong>Current Route:</strong><br />
+                  • Path: {window.location.pathname}<br />
+                  • Hash: {window.location.hash}<br />
+                  • Search: {window.location.search}
+                </Typography>
+              </Grid>
+            </Grid>
+            <Box sx={{ mt: 2 }}>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => {
+                  console.log('🔍 Current auth state:', { isAuthenticated, user, token: localStorage.getItem('token') });
+                  console.log('🔍 Current route:', window.location.pathname);
+                  alert('Check console for debug info');
+                }}
+                sx={{ mr: 2 }}
+              >
+                Log Auth State to Console
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                color="primary"
+                onClick={() => setDataManagementOpen(true)}
+              >
+                Data Management
+              </Button>
+            </Box>
+          </Box>
 
-        {/* Recent Activity */}
-        <Box>
-          <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 'bold', mb: 2 }}>
-            Recent Activity
-          </Typography>
-          <Paper sx={{ p: 2 }}>
-            <List>
-              <ListItem>
-                <ListItemAvatar>
-                  <Avatar sx={{ bgcolor: 'success.main' }}>
-                    <CheckCircleIcon />
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary="React.js Security Audit completed"
-                  secondary="John Doe completed the audit • 2 hours ago"
-                />
-              </ListItem>
-              <Divider variant="inset" component="li" />
-              <ListItem>
-                <ListItemAvatar>
-                  <Avatar sx={{ bgcolor: 'warning.main' }}>
-                    <ScheduleIcon />
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary="Node.js Backend Review started"
-                  secondary="Jane Smith started the audit • 4 hours ago"
-                />
-              </ListItem>
-              <Divider variant="inset" component="li" />
-              <ListItem>
-                <ListItemAvatar>
-                  <Avatar sx={{ bgcolor: 'info.main' }}>
-                    <PersonIcon />
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary="New auditor assigned to AWS project"
-                  secondary="Mike Johnson assigned • 1 day ago"
-                />
-              </ListItem>
-            </List>
-          </Paper>
+          {/* Welcome Section */}
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
+              Welcome back, {user?.firstName || 'User'}! 👋
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Here's what's happening with your tech audits today.
+            </Typography>
+          </Box>
+
+          {/* Stats Cards */}
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            <Grid item xs={12} sm={6} md={3}>
+              <StatCard
+                title="Total Audits"
+                value={realTimeStats.totalAudits}
+                icon={<AssessmentIcon />}
+                color="primary.main"
+                subtitle="All time"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <StatCard
+                title="Completed"
+                value={realTimeStats.completedAudits}
+                icon={<CheckCircleIcon />}
+                color="success.main"
+                subtitle={`${realTimeStats.completionRate}% success rate`}
+                trend="+12% this month"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <StatCard
+                title="In Progress"
+                value={realTimeStats.pendingAudits}
+                icon={<ScheduleIcon />}
+                color="warning.main"
+                subtitle="Currently active"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <StatCard
+                title="Overdue"
+                value={realTimeStats.overdueAudits}
+                icon={<ErrorIcon />}
+                color="error.main"
+                subtitle="Requires attention"
+              />
+            </Grid>
+          </Grid>
+
+          {/* Quick Actions */}
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 'bold', mb: 2 }}>
+              Quick Actions
+            </Typography>
+
+            {/* Test Navigation Button */}
+            <Box sx={{ mb: 2 }}>
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  console.log('🧪 Test navigation button clicked');
+                  alert('Test button clicked! Navigating to Questions...');
+                  window.location.href = '/questions';
+                }}
+                sx={{ mr: 2 }}
+              >
+                🧪 Test Navigate to Questions
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  console.log('🧪 Test navigation button clicked');
+                  alert('Test button clicked! Navigating to Dashboard...');
+                  window.location.href = '/dashboard';
+                }}
+              >
+                🧪 Test Back to Dashboard
+              </Button>
+              <Button
+                variant="contained"
+                color="error"
+                onClick={() => {
+                  alert('Simple test button works!');
+                  console.log('✅ Simple test button clicked');
+                }}
+              >
+                🧪 Simple Test
+              </Button>
+            </Box>
+
+            <Grid container spacing={2}>
+              {console.log('🔍 Rendering quickActions:', quickActions)}
+              {quickActions.map((action, index) => {
+                console.log('🔍 Rendering action:', action, 'at index:', index);
+                return (
+                  <Grid item xs={6} sm={3} key={index}>
+                    <QuickActionCard action={action} />
+                  </Grid>
+                );
+              })}
+            </Grid>
+          </Box>
+
+          {/* Recent Audits */}
+          <Box sx={{ mb: 4 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h5" component="h2" sx={{ fontWeight: 'bold' }}>
+                Recent Audits
+              </Typography>
+              <Button variant="outlined" startIcon={<AddIcon />}>
+                New Audit
+              </Button>
+            </Box>
+            <Grid container spacing={3}>
+              {recentAudits.map((audit) => (
+                <Grid item xs={12} sm={6} md={6} lg={3} key={audit.id}>
+                  <AuditCard audit={audit} />
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
+
+          {/* Recent Activity */}
+          <Box>
+            <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 'bold', mb: 2 }}>
+              Recent Activity
+            </Typography>
+            <Paper sx={{ p: 2 }}>
+              <List>
+                <ListItem>
+                  <ListItemAvatar>
+                    <Avatar sx={{ bgcolor: 'success.main' }}>
+                      <CheckCircleIcon />
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary="React.js Security Audit completed"
+                    secondary="John Doe completed the audit • 2 hours ago"
+                  />
+                </ListItem>
+                <Divider variant="inset" component="li" />
+                <ListItem>
+                  <ListItemAvatar>
+                    <Avatar sx={{ bgcolor: 'warning.main' }}>
+                      <ScheduleIcon />
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary="Node.js Backend Review started"
+                    secondary="Jane Smith started the audit • 4 hours ago"
+                  />
+                </ListItem>
+                <Divider variant="inset" component="li" />
+                <ListItem>
+                  <ListItemAvatar>
+                    <Avatar sx={{ bgcolor: 'info.main' }}>
+                      <PersonIcon />
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary="New auditor assigned to AWS project"
+                    secondary="Mike Johnson assigned • 1 day ago"
+                  />
+                </ListItem>
+              </List>
+            </Paper>
+          </Box>
         </Box>
-      </Box>
-    </Layout>
+      </Layout>
+
+      {/* Data Management Dialog */}
+      <DataManagementDialog
+        open={dataManagementOpen}
+        onClose={() => setDataManagementOpen(false)}
+      />
+    </>
   );
 };
 

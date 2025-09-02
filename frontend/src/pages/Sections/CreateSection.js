@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getQuestionsByIds, getAllQuestions } from '../../data/questionsData';
+import dataPersistenceService from '../../services/dataPersistenceService';
 import {
     Box,
     Typography,
@@ -53,46 +54,55 @@ const CreateSection = () => {
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        if (isEditMode) {
-            // Update existing section
-            const updatedSection = {
-                ...editingSection,
-                ...formData,
-                questionCount: formData.questionIds?.length || 0,
-                lastModified: new Date().toISOString().split('T')[0],
-            };
+        try {
+            if (isEditMode) {
+                // Update existing section using persistence service
+                const updatedSection = dataPersistenceService.updateSection(editingSection.id, formData);
 
-            // For demo purposes - in real app, this would be an API call
+                if (updatedSection) {
+                    setSnackbar({
+                        open: true,
+                        message: 'Section updated successfully!',
+                        severity: 'success'
+                    });
+                } else {
+                    throw new Error('Failed to update section');
+                }
+            } else {
+                // Create new section using persistence service
+                const newSection = {
+                    ...formData,
+                    status: 'active',
+                    questionCount: formData.questionIds?.length || 0,
+                    priority: 'Medium',
+                    completionRate: 0,
+                };
+
+                const createdSection = dataPersistenceService.addSection(newSection);
+
+                if (createdSection) {
+                    setSnackbar({
+                        open: true,
+                        message: 'Section created successfully!',
+                        severity: 'success'
+                    });
+                } else {
+                    throw new Error('Failed to create section');
+                }
+            }
+
+            // Navigate back to sections page after a short delay
+            setTimeout(() => {
+                navigate('/sections');
+            }, 1500);
+        } catch (err) {
+            console.error('❌ Error saving section:', err);
             setSnackbar({
                 open: true,
-                message: 'Section updated successfully!',
-                severity: 'success'
-            });
-        } else {
-            // Create new section
-            const newSection = {
-                id: Date.now(), // Simple ID generation for mock
-                ...formData,
-                status: 'active',
-                questionCount: formData.questionIds?.length || 0,
-                createdAt: new Date().toISOString().split('T')[0],
-                lastModified: new Date().toISOString().split('T')[0],
-                priority: 'Medium',
-                completionRate: 0,
-            };
-
-            // For demo purposes - in real app, this would be an API call
-            setSnackbar({
-                open: true,
-                message: 'Section created successfully!',
-                severity: 'success'
+                message: `Failed to ${isEditMode ? 'update' : 'create'} section. Please try again.`,
+                severity: 'error'
             });
         }
-
-        // Navigate back to sections page after a short delay
-        setTimeout(() => {
-            navigate('/sections');
-        }, 1500);
     };
 
     const handleQuestionToggle = (questionId) => {

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { questionsData, getQuestionsByIds, getAllQuestions } from '../../data/questionsData';
+import { sectionsData as mockSections } from '../../data/sectionsData';
+import dataPersistenceService from '../../services/dataPersistenceService';
 import {
   Box,
   Typography,
@@ -74,6 +76,7 @@ import Layout from '../../components/Layout/Layout';
 
 const Sections = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [sections, setSections] = useState([]);
   const [filteredSections, setFilteredSections] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -87,111 +90,29 @@ const Sections = () => {
   const [expandedPreview, setExpandedPreview] = useState(null);
 
   // Mock data - in real app, this would come from API
-  const mockSections = [
-    {
-      id: 1,
-      title: 'Database Security',
-      description: 'Core security controls for database access and data protection',
-      status: 'active',
-      questionCount: 12,
-      createdAt: '2024-01-15',
-      lastModified: '2024-01-20',
-      questionIds: [1, 3], // Reference to question IDs
-      priority: 'Critical',
-      completionRate: 85
-    },
-    {
-      id: 2,
-      title: 'Network Infrastructure',
-      description: 'Network security, monitoring, and infrastructure controls',
-      status: 'active',
-      questionCount: 15,
-      createdAt: '2024-01-12',
-      lastModified: '2024-01-18',
-      questionIds: [7], // Reference to question IDs
-      priority: 'High',
-      completionRate: 92
-    },
-    {
-      id: 3,
-      title: 'Identity and Access Management',
-      description: 'User authentication, authorization, and access control policies',
-      status: 'active',
-      questionCount: 18,
-      createdAt: '2024-01-10',
-      lastModified: '2024-01-19',
-      questionIds: [6], // Reference to question IDs
-      priority: 'Critical',
-      completionRate: 78
-    },
-    {
-      id: 4,
-      title: 'Data Protection and Privacy',
-      description: 'Data classification, encryption, and privacy compliance measures',
-      status: 'active',
-      questionCount: 14,
-      createdAt: '2024-01-08',
-      lastModified: '2024-01-17',
-      questionIds: [8], // Reference to question IDs
-      priority: 'Critical',
-      completionRate: 89
-    },
-    {
-      id: 5,
-      title: 'Incident Response and Recovery',
-      description: 'Incident handling, business continuity, and disaster recovery procedures',
-      status: 'active',
-      questionCount: 11,
-      createdAt: '2024-01-06',
-      lastModified: '2024-01-16',
-      questionIds: [9], // Reference to question IDs
-      priority: 'High',
-      completionRate: 95
-    },
-    {
-      id: 6,
-      title: 'Software Development Security',
-      description: 'Secure coding practices, code review, and application security',
-      status: 'active',
-      questionCount: 16,
-      createdAt: '2024-01-04',
-      lastModified: '2024-01-15',
-      questionIds: [5], // Reference to question IDs
-      priority: 'Medium',
-      completionRate: 72
-    },
-    {
-      id: 7,
-      title: 'Third-Party Risk Management',
-      description: 'Vendor assessment, contract security, and supply chain risk management',
-      status: 'active',
-      questionCount: 13,
-      createdAt: '2024-01-02',
-      lastModified: '2024-01-14',
-      questionIds: [10], // Reference to question IDs
-      priority: 'Medium',
-      completionRate: 81
-    },
-    {
-      id: 8,
-      title: 'Compliance and Governance',
-      description: 'Regulatory compliance, governance frameworks, and audit management',
-      status: 'active',
-      questionCount: 20,
-      createdAt: '2023-12-30',
-      lastModified: '2024-01-13',
-      questionIds: [2, 4], // Reference to question IDs
-      priority: 'High',
-      completionRate: 88
-    }
-  ];
-
   // Removed categories and weightOptions as they are no longer needed
 
+  const loadSections = () => {
+    try {
+      const persistedSections = dataPersistenceService.loadSections();
+      setSections(persistedSections);
+      setFilteredSections(persistedSections);
+    } catch (err) {
+      console.error('❌ Error loading sections:', err);
+      // Fallback to mock data if persistence fails
+      setSections(mockSections);
+      setFilteredSections(mockSections);
+    }
+  };
+
   useEffect(() => {
-    setSections(mockSections);
-    setFilteredSections(mockSections);
+    loadSections();
   }, []);
+
+  // Reload sections when navigating back to this page
+  useEffect(() => {
+    loadSections();
+  }, [location.pathname]);
 
   useEffect(() => {
     filterSections();
@@ -221,22 +142,45 @@ const Sections = () => {
   };
 
   const handleDeleteSection = (sectionId) => {
-    const updatedSections = sections.filter(s => s.id !== sectionId);
-    setSections(updatedSections);
-    setSnackbar({ open: true, message: 'Section deleted successfully!', severity: 'success' });
+    try {
+      const success = dataPersistenceService.deleteSection(sectionId);
+
+      if (success) {
+        // Reload sections to get updated list
+        const updatedSections = dataPersistenceService.loadSections();
+        setSections(updatedSections);
+        setSnackbar({ open: true, message: 'Section deleted successfully!', severity: 'success' });
+      } else {
+        throw new Error('Failed to delete section');
+      }
+    } catch (err) {
+      console.error('❌ Error deleting section:', err);
+      setSnackbar({ open: true, message: 'Failed to delete section. Please try again.', severity: 'error' });
+    }
   };
 
   const handleCloneSection = (section) => {
-    const clonedSection = {
-      ...section,
-      id: Math.max(...sections.map(s => s.id)) + 1,
-      title: `${section.title} (Copy)`,
-      createdAt: new Date().toISOString().split('T')[0],
-      lastModified: new Date().toISOString().split('T')[0],
-      completionRate: 0,
-    };
-    setSections([...sections, clonedSection]);
-    setSnackbar({ open: true, message: 'Section cloned successfully!', severity: 'success' });
+    try {
+      const clonedSection = {
+        ...section,
+        title: `${section.title} (Copy)`,
+        completionRate: 0,
+      };
+
+      const newSection = dataPersistenceService.addSection(clonedSection);
+
+      if (newSection) {
+        // Reload sections to get updated list
+        const updatedSections = dataPersistenceService.loadSections();
+        setSections(updatedSections);
+        setSnackbar({ open: true, message: 'Section cloned successfully!', severity: 'success' });
+      } else {
+        throw new Error('Failed to clone section');
+      }
+    } catch (err) {
+      console.error('❌ Error cloning section:', err);
+      setSnackbar({ open: true, message: 'Failed to clone section. Please try again.', severity: 'error' });
+    }
   };
 
   const handleChangePage = (event, newPage) => {
@@ -519,7 +463,7 @@ const Sections = () => {
             />
           </Paper>
         ) : (
-          /* Grid View */
+          // Grid View
           <Box>
             <Grid container spacing={2}>
               {filteredSections

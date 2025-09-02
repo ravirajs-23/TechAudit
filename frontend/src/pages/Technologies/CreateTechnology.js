@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { questionnairesData as mockQuestionnaires } from '../../data/questionnairesData';
+import dataPersistenceService from '../../services/dataPersistenceService';
 import {
   Box,
   Typography,
@@ -44,64 +46,6 @@ const CreateTechnology = () => {
   const [questionnaireSearch, setQuestionnaireSearch] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-  // Mock questionnaires data
-  const mockQuestionnaires = [
-    {
-      id: 1,
-      title: 'Database Security Assessment',
-      description: 'Comprehensive security evaluation for database systems',
-      questionCount: 25,
-      category: 'Database',
-      estimatedTime: '45 minutes',
-      status: 'active'
-    },
-    {
-      id: 2,
-      title: 'Identity Management Audit',
-      description: 'Authentication and authorization systems review',
-      questionCount: 18,
-      category: 'Identity Management',
-      estimatedTime: '30 minutes',
-      status: 'active'
-    },
-    {
-      id: 3,
-      title: 'Web Server Security Check',
-      description: 'Security configuration and vulnerability assessment',
-      questionCount: 22,
-      category: 'Web Server',
-      estimatedTime: '35 minutes',
-      status: 'active'
-    },
-    {
-      id: 4,
-      title: 'Network Security Review',
-      description: 'Firewall and network infrastructure evaluation',
-      questionCount: 30,
-      category: 'Network Security',
-      estimatedTime: '50 minutes',
-      status: 'active'
-    },
-    {
-      id: 5,
-      title: 'Virtualization Platform Audit',
-      description: 'Virtual infrastructure security assessment',
-      questionCount: 20,
-      category: 'Virtualization',
-      estimatedTime: '40 minutes',
-      status: 'active'
-    },
-    {
-      id: 6,
-      title: 'Container Security Assessment',
-      description: 'Container orchestration and security evaluation',
-      questionCount: 28,
-      category: 'Container Orchestration',
-      estimatedTime: '45 minutes',
-      status: 'active'
-    }
-  ];
-
   const categories = ['Database', 'Identity Management', 'Web Server', 'Network Security', 'Virtualization', 'Container Orchestration'];
 
   // Initialize form data when editing
@@ -120,54 +64,70 @@ const CreateTechnology = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (isEditMode) {
-      // Update existing technology
-      const updatedTechnology = {
-        ...editingTechnology,
-        ...formData,
-        lastUpdated: new Date().toISOString().split('T')[0],
-      };
+    try {
+      if (isEditMode) {
+        // Update existing technology using persistence service
+        const updatedTechnology = dataPersistenceService.updateTechnology(editingTechnology.id, formData);
 
-      // For demo purposes - in real app, this would be an API call
+        if (updatedTechnology) {
+          setSnackbar({
+            open: true,
+            message: 'Technology updated successfully!',
+            severity: 'success'
+          });
+        } else {
+          throw new Error('Failed to update technology');
+        }
+      } else {
+        // Create new technology using persistence service
+        const newTechnology = {
+          ...formData,
+          status: 'active',
+          securityScore: 7.0,
+          complianceStatus: 'Under Review',
+          questionnaireCount: 0,
+          auditCount: 0,
+          features: [],
+          risks: [],
+        };
+
+        const createdTechnology = dataPersistenceService.addTechnology(newTechnology);
+
+        if (createdTechnology) {
+          setSnackbar({
+            open: true,
+            message: 'Technology created successfully!',
+            severity: 'success'
+          });
+        } else {
+          throw new Error('Failed to create technology');
+        }
+      }
+
+      // Navigate back to technologies page after a short delay
+      setTimeout(() => {
+        navigate('/technologies');
+      }, 1500);
+    } catch (err) {
+      console.error('❌ Error saving technology:', err);
       setSnackbar({
         open: true,
-        message: 'Technology updated successfully!',
-        severity: 'success'
-      });
-    } else {
-      // Create new technology
-      const newTechnology = {
-        id: Date.now(), // Simple ID generation for mock
-        ...formData,
-        status: 'active',
-        securityScore: 7.0,
-        complianceStatus: 'Under Review',
-        questionnaireCount: 0,
-        auditCount: 0,
-        createdAt: new Date().toISOString().split('T')[0],
-        lastUpdated: new Date().toISOString().split('T')[0],
-        features: [],
-        risks: [],
-      };
-
-      // For demo purposes - in real app, this would be an API call
-      setSnackbar({
-        open: true,
-        message: 'Technology created successfully!',
-        severity: 'success'
+        message: `Failed to ${isEditMode ? 'update' : 'create'} technology. Please try again.`,
+        severity: 'error'
       });
     }
-
-    // Navigate back to technologies page after a short delay
-    setTimeout(() => {
-      navigate('/technologies');
-    }, 1500);
   };
 
   // Helper functions for questionnaire assignment
   const getAvailableQuestionnaires = () => {
-    // In a real app, this would filter out already assigned questionnaires
-    return mockQuestionnaires;
+    try {
+      // Load from persistence service
+      return dataPersistenceService.loadQuestionnaires();
+    } catch (err) {
+      console.error('❌ Error loading questionnaires:', err);
+      // Fallback to mock data
+      return mockQuestionnaires;
+    }
   };
 
   const getFilteredQuestionnaires = () => {

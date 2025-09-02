@@ -59,6 +59,8 @@ import {
 } from '@mui/icons-material';
 import Layout from '../../components/Layout/Layout';
 import { useAuth } from '../../context/AuthContext';
+import { questionsData as staticQuestions } from '../../data/questionsData';
+import dataPersistenceService from '../../services/dataPersistenceService';
 
 const Questions = () => {
   const { user, isAuthenticated, token } = useAuth();
@@ -85,143 +87,25 @@ const Questions = () => {
   // Import questions from shared data
   // Note: In the future, this should be replaced with questionsData import
   // For now keeping existing structure to avoid breaking changes
-  const staticQuestions = [
-    {
-      id: 1,
-      text: "Is a documented cybersecurity policy in place for the organization?",
-      guidance: "Review the written cybersecurity policy documentation and verify it is current and comprehensive.",
-      evidenceRequired: "document",
-      status: "active",
-      createdAt: "2024-01-15",
-      tags: ["security", "policy", "documentation"],
-      category: "Security",
-      priority: "High",
-      lastModified: "2024-01-20"
-    },
-    {
-      id: 2,
-      text: "Are regular security awareness training sessions conducted for all employees?",
-      guidance: "Check security training records, schedules, and attendance logs to verify compliance.",
-      evidenceRequired: "document",
-      status: "active",
-      createdAt: "2024-01-14",
-      tags: ["training", "security", "awareness"],
-      category: "Security",
-      priority: "High",
-      lastModified: "2024-01-18"
-    },
-    {
-      id: 3,
-      text: "Are database access controls properly configured and monitored?",
-      guidance: "Verify database user accounts, permissions, and access logging mechanisms are in place.",
-      evidenceRequired: "screenshot",
-      status: "active",
-      createdAt: "2024-01-13",
-      tags: ["database", "access-control", "monitoring"],
-      category: "Security",
-      priority: "Critical",
-      lastModified: "2024-01-19"
-    },
-    {
-      id: 4,
-      text: "Is the backup and recovery system tested regularly?",
-      guidance: "Review backup schedules, test results, and recovery procedures documentation.",
-      evidenceRequired: "document",
-      status: "active",
-      createdAt: "2024-01-12",
-      tags: ["backup", "recovery", "testing"],
-      category: "Backup",
-      priority: "High",
-      lastModified: "2024-01-17"
-    },
-    {
-      id: 5,
-      text: "Are system vulnerabilities scanned and patched in a timely manner?",
-      guidance: "Check vulnerability scanning reports and patch management procedures.",
-      evidenceRequired: "log",
-      status: "active",
-      createdAt: "2024-01-11",
-      tags: ["vulnerability", "patching", "scanning"],
-      category: "Maintenance",
-      priority: "Critical",
-      lastModified: "2024-01-16"
-    },
-    {
-      id: 6,
-      text: "Is multi-factor authentication implemented for administrative accounts?",
-      guidance: "Verify MFA configuration for all privileged and administrative user accounts.",
-      evidenceRequired: "screenshot",
-      status: "active",
-      createdAt: "2024-01-10",
-      tags: ["mfa", "authentication", "admin"],
-      category: "Authentication",
-      priority: "Critical",
-      lastModified: "2024-01-15"
-    },
-    {
-      id: 7,
-      text: "Are network traffic and system activities monitored continuously?",
-      guidance: "Review monitoring system configurations, alert settings, and log analysis procedures.",
-      evidenceRequired: "screenshot",
-      status: "active",
-      createdAt: "2024-01-09",
-      tags: ["monitoring", "network", "logging"],
-      category: "Monitoring",
-      priority: "Medium",
-      lastModified: "2024-01-14"
-    },
-    {
-      id: 8,
-      text: "Is data encryption applied to sensitive information at rest and in transit?",
-      guidance: "Verify encryption standards, key management, and data protection measures.",
-      evidenceRequired: "document",
-      status: "active",
-      createdAt: "2024-01-08",
-      tags: ["encryption", "data-protection", "compliance"],
-      category: "Compliance",
-      priority: "Critical",
-      lastModified: "2024-01-13"
-    },
-    {
-      id: 9,
-      text: "Are incident response procedures documented and regularly tested?",
-      guidance: "Review incident response plan, team roles, and recent drill exercises.",
-      evidenceRequired: "document",
-      status: "active",
-      createdAt: "2024-01-07",
-      tags: ["incident-response", "procedures", "testing"],
-      category: "Security",
-      priority: "High",
-      lastModified: "2024-01-12"
-    },
-    {
-      id: 10,
-      text: "Is access to production systems properly segregated and controlled?",
-      guidance: "Check production access controls, approval workflows, and segregation of duties.",
-      evidenceRequired: "observation",
-      status: "active",
-      createdAt: "2024-01-06",
-      tags: ["production", "access-control", "segregation"],
-      category: "Security",
-      priority: "High",
-      lastModified: "2024-01-11"
-    }
-  ];
-
   const categories = ['Security', 'Maintenance', 'Authentication', 'Backup', 'Monitoring', 'Compliance'];
   const priorities = ['Low', 'Medium', 'High', 'Critical'];
 
-  // Load static questions
+  // Load questions from persistence service
   const loadQuestions = () => {
     setLoading(true);
     setError(null);
 
-    // Simulate loading delay
-    setTimeout(() => {
-      setQuestions(staticQuestions);
-      setFilteredQuestions(staticQuestions);
+    try {
+      // Load from persistence service
+      const persistedQuestions = dataPersistenceService.loadQuestions();
+      setQuestions(persistedQuestions);
+      setFilteredQuestions(persistedQuestions);
       setLoading(false);
-    }, 500);
+    } catch (err) {
+      console.error('❌ Error loading questions:', err);
+      setError('Failed to load questions. Please try again.');
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -263,37 +147,40 @@ const Questions = () => {
       // Prepare question data
       const processedData = {
         ...questionData,
-        lastModified: new Date().toISOString().split('T')[0],
         tags: questionData.tags ? questionData.tags.split(',').map(tag => tag.trim()) : [],
         status: 'active',
       };
 
       if (editingQuestion) {
-        // Update existing question
+        // Update existing question using persistence service
         console.log('🔄 Updating question...');
+        const updatedQuestion = dataPersistenceService.updateQuestion(editingQuestion.id, processedData);
 
-        const updatedQuestions = questions.map(q =>
-          q.id === editingQuestion.id ? { ...q, ...processedData } : q
-        );
-        setQuestions(updatedQuestions);
-        console.log('✅ Question updated successfully!');
+        if (updatedQuestion) {
+          // Reload questions to get updated list
+          loadQuestions();
+          console.log('✅ Question updated successfully!');
+        } else {
+          throw new Error('Failed to update question');
+        }
       } else {
-        // Add new question
+        // Add new question using persistence service
         console.log('🔄 Creating new question...');
+        const newQuestion = dataPersistenceService.addQuestion(processedData);
 
-        const newQuestion = {
-          ...processedData,
-          id: Math.max(...questions.map(q => q.id), 0) + 1,
-          createdAt: new Date().toISOString().split('T')[0],
-        };
-        setQuestions([...questions, newQuestion]);
-        console.log('✅ Question created successfully!');
+        if (newQuestion) {
+          // Reload questions to get updated list
+          loadQuestions();
+          console.log('✅ Question created successfully!');
+        } else {
+          throw new Error('Failed to create question');
+        }
       }
 
       handleCloseDialog();
     } catch (err) {
       console.error('❌ Error saving question:', err);
-      console.error(`❌ Failed to ${editingQuestion ? 'update' : 'create'} question`);
+      setError(`Failed to ${editingQuestion ? 'update' : 'create'} question. Please try again.`);
     }
   };
 
@@ -301,13 +188,19 @@ const Questions = () => {
     try {
       console.log('🗑️ Deleting question...');
 
-      // Update local state
-      const updatedQuestions = questions.filter(q => q.id !== questionId);
-      setQuestions(updatedQuestions);
-      console.log('✅ Question deleted successfully!');
+      // Delete using persistence service
+      const success = dataPersistenceService.deleteQuestion(questionId);
+
+      if (success) {
+        // Reload questions to get updated list
+        loadQuestions();
+        console.log('✅ Question deleted successfully!');
+      } else {
+        throw new Error('Failed to delete question');
+      }
     } catch (err) {
       console.error('❌ Error deleting question:', err);
-      console.error('❌ Failed to delete question');
+      setError('Failed to delete question. Please try again.');
     }
   };
 
@@ -605,17 +498,6 @@ const Questions = () => {
                   ))}
                 </Select>
               </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6} md={2}>
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<RefreshIcon />}
-                onClick={loadQuestions}
-                disabled={loading}
-              >
-                Refresh
-              </Button>
             </Grid>
             <Grid item xs={12} sm={6} md={2}>
               <Button
