@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -28,7 +28,6 @@ import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Visibility as ViewIcon,
   Build as BuildIcon,
   QuestionAnswer as QuestionIcon,
   ViewList as SectionIcon,
@@ -39,13 +38,29 @@ import QuestionCreator from './QuestionCreator';
 import SectionBuilder from './SectionBuilder';
 import QuestionnaireAssembler from './QuestionnaireAssembler';
 import TechnologyConnector from './TechnologyConnector';
-import QuestionnaireViewer from './QuestionnaireViewer';
+import { loadDemoData } from '../../demoData';
+
 
 const QuestionnaireBuilder = () => {
   const [activeModule, setActiveModule] = useState('questions');
   const [openDialog, setOpenDialog] = useState(false);
   const [dialogType, setDialogType] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+  // State for managing data across modules - initialized with demo data
+  const [questions, setQuestions] = useState([]);
+  const [sections, setSections] = useState([]);
+  const [questionnaires, setQuestionnaires] = useState([]);
+  const [technologies, setTechnologies] = useState([]);
+
+  // Load demo data on component mount
+  useEffect(() => {
+    const demoData = loadDemoData();
+    setQuestions(demoData.questions);
+    setSections(demoData.sections);
+    setQuestionnaires(demoData.questionnaires);
+    setTechnologies(demoData.technologies);
+  }, []);
 
   const modules = [
     {
@@ -54,6 +69,7 @@ const QuestionnaireBuilder = () => {
       description: 'Create and manage audit questions',
       icon: <QuestionIcon />,
       color: 'primary',
+      count: questions.length,
     },
     {
       id: 'sections',
@@ -61,6 +77,7 @@ const QuestionnaireBuilder = () => {
       description: 'Organize questions into logical sections',
       icon: <SectionIcon />,
       color: 'secondary',
+      count: sections.length,
     },
     {
       id: 'questionnaires',
@@ -68,6 +85,7 @@ const QuestionnaireBuilder = () => {
       description: 'Build complete audit questionnaires',
       icon: <BuildIcon />,
       color: 'success',
+      count: questionnaires.length,
     },
     {
       id: 'technologies',
@@ -75,13 +93,7 @@ const QuestionnaireBuilder = () => {
       description: 'Manage technology profiles',
       icon: <TechnologyIcon />,
       color: 'info',
-    },
-    {
-      id: 'viewer',
-      title: 'Viewer',
-      description: 'Preview and test questionnaires',
-      icon: <ViewIcon />,
-      color: 'warning',
+      count: technologies.length,
     },
   ];
 
@@ -110,17 +122,15 @@ const QuestionnaireBuilder = () => {
   const renderActiveModule = () => {
     switch (activeModule) {
       case 'questions':
-        return <QuestionCreator onSnackbar={handleSnackbar} />;
+        return <QuestionCreator questions={questions} setQuestions={setQuestions} onSnackbar={handleSnackbar} />;
       case 'sections':
-        return <SectionBuilder onSnackbar={handleSnackbar} />;
+        return <SectionBuilder questions={questions} sections={sections} setSections={setSections} onSnackbar={handleSnackbar} />;
       case 'questionnaires':
-        return <QuestionnaireAssembler onSnackbar={handleSnackbar} />;
+        return <QuestionnaireAssembler sections={sections} questionnaires={questionnaires} setQuestionnaires={setQuestionnaires} onSnackbar={handleSnackbar} />;
       case 'technologies':
-        return <TechnologyConnector onSnackbar={handleSnackbar} />;
-      case 'viewer':
-        return <QuestionnaireViewer onSnackbar={handleSnackbar} />;
+        return <TechnologyConnector questionnaires={questionnaires} technologies={technologies} setTechnologies={setTechnologies} onSnackbar={handleSnackbar} />;
       default:
-        return <QuestionCreator onSnackbar={handleSnackbar} />;
+        return <QuestionCreator questions={questions} setQuestions={setQuestions} onSnackbar={handleSnackbar} />;
     }
   };
 
@@ -165,6 +175,16 @@ const QuestionnaireBuilder = () => {
         <Typography variant="body2" color="text.secondary">
           {module.description}
         </Typography>
+        {module.count > 0 && (
+          <Box sx={{ mt: 1, display: 'flex', justifyContent: 'center' }}>
+            <Chip
+              label={`${module.count} items`}
+              color={module.color}
+              variant="outlined"
+              size="small"
+            />
+          </Box>
+        )}
       </CardContent>
       <CardActions sx={{ justifyContent: 'center', pb: 2 }}>
         <Chip
@@ -185,9 +205,35 @@ const QuestionnaireBuilder = () => {
           <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
             Questionnaire Builder
           </Typography>
-          <Typography variant="body1" color="text.secondary">
+          <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
             Build comprehensive audit questionnaires using independent modules
           </Typography>
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mt: 2 }}>
+            <Chip
+              label={`${questions.length} Questions`}
+              color="primary"
+              variant="outlined"
+              size="small"
+            />
+            <Chip
+              label={`${sections.length} Sections`}
+              color="secondary"
+              variant="outlined"
+              size="small"
+            />
+            <Chip
+              label={`${questionnaires.length} Questionnaires`}
+              color="success"
+              variant="outlined"
+              size="small"
+            />
+            <Chip
+              label={`${technologies.length} Technologies`}
+              color="info"
+              variant="outlined"
+              size="small"
+            />
+          </Box>
         </Box>
 
         {/* Module Selection */}
@@ -197,7 +243,7 @@ const QuestionnaireBuilder = () => {
           </Typography>
           <Grid container spacing={3}>
             {modules.map((module) => (
-              <Grid item xs={12} sm={6} md={4} lg={2.4} key={module.id}>
+              <Grid item xs={12} sm={6} md={3} lg={3} key={module.id}>
                 <ModuleCard module={module} />
               </Grid>
             ))}
@@ -218,7 +264,7 @@ const QuestionnaireBuilder = () => {
               Add New {modules.find(m => m.id === activeModule)?.title?.slice(0, -1)}
             </Button>
           </Box>
-          
+
           <Paper sx={{ p: 3, minHeight: '400px' }}>
             {renderActiveModule()}
           </Paper>

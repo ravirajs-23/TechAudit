@@ -40,7 +40,7 @@ const TechnologyConnector = ({ questionnaires, technologies, setTechnologies }) 
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
       alert('Technology name is required!');
       return;
@@ -51,8 +51,8 @@ const TechnologyConnector = ({ questionnaires, technologies, setTechnologies }) 
       return;
     }
 
-    const selectedQ = questionnaires.find(q => q.id === formData.selectedQuestionnaire);
-    
+    const selectedQ = (questionnaires || []).find(q => q.id === formData.selectedQuestionnaire);
+
     if (isEditMode && editingTechnology) {
       // Update existing technology
       const updatedTechnology = {
@@ -62,10 +62,10 @@ const TechnologyConnector = ({ questionnaires, technologies, setTechnologies }) 
         updatedAt: new Date().toISOString()
       };
 
-      setTechnologies(prev => prev.map(t => 
+      setTechnologies(prev => (prev || []).map(t =>
         t.id === editingTechnology.id ? updatedTechnology : t
       ));
-      
+
       // Reset form and edit mode
       handleCancelEdit();
     } else {
@@ -77,7 +77,7 @@ const TechnologyConnector = ({ questionnaires, technologies, setTechnologies }) 
         createdAt: new Date().toISOString()
       };
 
-      setTechnologies(prev => [...prev, newTechnology]);
+      setTechnologies(prev => [...(prev || []), newTechnology]);
       setFormData({
         name: '',
         version: '',
@@ -122,7 +122,7 @@ const TechnologyConnector = ({ questionnaires, technologies, setTechnologies }) 
   };
 
   const handleDeleteTechnology = (technologyId) => {
-    setTechnologies(prev => prev.filter(t => t.id !== technologyId));
+    setTechnologies(prev => (prev || []).filter(t => t.id !== technologyId));
   };
 
   return (
@@ -133,7 +133,7 @@ const TechnologyConnector = ({ questionnaires, technologies, setTechnologies }) 
       </div>
 
       {!showForm ? (
-        <button 
+        <button
           onClick={() => setShowForm(true)}
           style={{
             width: '100%',
@@ -159,7 +159,7 @@ const TechnologyConnector = ({ questionnaires, technologies, setTechnologies }) 
           marginBottom: '30px'
         }}>
           <h3>{isEditMode ? 'Edit Technology' : 'New Technology'}</h3>
-          
+
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
             <div>
               <label>Technology Name *</label>
@@ -295,9 +295,9 @@ const TechnologyConnector = ({ questionnaires, technologies, setTechnologies }) 
               }}
             >
               <option value="">Choose a questionnaire...</option>
-              {questionnaires.map(q => (
+              {(questionnaires || []).map(q => (
                 <option key={q.id} value={q.id}>
-                  {q.title} v{q.version} ({q.sections.length} sections)
+                  {q.title} v{q.version} ({(q.sections || []).length} sections)
                 </option>
               ))}
             </select>
@@ -322,12 +322,12 @@ const TechnologyConnector = ({ questionnaires, technologies, setTechnologies }) 
       )}
 
       <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-        <h3>Connected Technologies ({technologies.length})</h3>
-        {technologies.length === 0 ? (
+        <h3>Connected Technologies ({(technologies || []).length})</h3>
+        {(technologies || []).length === 0 ? (
           <p>No technologies connected yet.</p>
         ) : (
           <div style={{ display: 'grid', gap: '20px', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))' }}>
-            {technologies.map(tech => (
+            {(technologies || []).map(tech => (
               <div key={tech.id} style={{
                 background: 'white',
                 padding: '20px',
@@ -341,16 +341,16 @@ const TechnologyConnector = ({ questionnaires, technologies, setTechnologies }) 
                 <p>Risk Level: {tech.riskLevel}</p>
                 <p>Questionnaire: {tech.questionnaire?.title}</p>
                 {tech.description && <p>{tech.description}</p>}
-                
-                <div style={{ 
-                  display: 'flex', 
-                  gap: '10px', 
-                  justifyContent: 'flex-end', 
+
+                <div style={{
+                  display: 'flex',
+                  gap: '10px',
+                  justifyContent: 'flex-end',
                   marginTop: '15px',
                   paddingTop: '15px',
                   borderTop: '1px solid #f3f4f6'
                 }}>
-                  <button 
+                  <button
                     onClick={() => handleEditTechnology(tech)}
                     style={{
                       background: '#f0f9ff',
@@ -364,7 +364,7 @@ const TechnologyConnector = ({ questionnaires, technologies, setTechnologies }) 
                   >
                     ✏️ Edit
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleDeleteTechnology(tech.id)}
                     style={{
                       background: '#fef2f2',

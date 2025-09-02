@@ -22,7 +22,7 @@ const QuestionCreator = ({ questions, setQuestions }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (!formData.text.trim()) {
       alert('Question text is required!');
       return;
@@ -36,10 +36,10 @@ const QuestionCreator = ({ questions, setQuestions }) => {
         updatedAt: new Date().toISOString()
       };
 
-      setQuestions(prev => prev.map(q => 
+      setQuestions(prev => (prev || []).map(q =>
         q.id === editingQuestion.id ? updatedQuestion : q
       ));
-      
+
       // Reset form and edit mode
       handleCancelEdit();
     } else {
@@ -50,7 +50,7 @@ const QuestionCreator = ({ questions, setQuestions }) => {
         createdAt: new Date().toISOString()
       };
 
-      setQuestions(prev => [...prev, newQuestion]);
+      setQuestions(prev => [...(prev || []), newQuestion]);
       setFormData({
         text: '',
         guidance: '',
@@ -61,7 +61,7 @@ const QuestionCreator = ({ questions, setQuestions }) => {
   };
 
   const handleDeleteQuestion = (questionId) => {
-    setQuestions(prev => prev.filter(q => q.id !== questionId));
+    setQuestions(prev => (prev || []).filter(q => q.id !== questionId));
   };
 
   const handleEditQuestion = (question) => {
@@ -96,7 +96,7 @@ const QuestionCreator = ({ questions, setQuestions }) => {
       {/* Question Form */}
       <div className="question-form-container">
         {!showForm ? (
-          <button 
+          <button
             className="add-question-btn"
             onClick={() => setShowForm(true)}
           >
@@ -106,8 +106,8 @@ const QuestionCreator = ({ questions, setQuestions }) => {
           <form className="question-form" onSubmit={handleSubmit}>
             <div className="form-header">
               <h3>{isEditMode ? 'Edit Question' : 'New Question'}</h3>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="close-btn"
                 onClick={isEditMode ? handleCancelEdit : () => setShowForm(false)}
               >
@@ -172,42 +172,42 @@ const QuestionCreator = ({ questions, setQuestions }) => {
 
       {/* Questions List */}
       <div className="questions-list">
-        <h3>Created Questions ({questions.length})</h3>
-        
-        {questions.length === 0 ? (
+        <h3>Created Questions ({(questions || []).length})</h3>
+
+        {(questions || []).length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">❓</div>
             <p>No questions created yet. Start building your audit questions!</p>
           </div>
         ) : (
           <div className="questions-grid">
-            {questions.map((question) => (
+            {(questions || []).map((question) => (
               <div key={question.id} className="question-card">
                 <div className="question-text">{question.text}</div>
-                
+
                 {question.guidance && (
                   <div className="question-guidance">
                     <strong>Guidance:</strong> {question.guidance}
                   </div>
                 )}
-                
+
                 {question.evidenceRequired && (
                   <div className="question-evidence">
-                    <strong>Evidence:</strong> 
+                    <strong>Evidence:</strong>
                     <span className={`evidence-badge evidence-${question.evidenceRequired.toLowerCase()}`}>
                       {question.evidenceRequired}
                     </span>
                   </div>
                 )}
-                
+
                 <div className="question-actions">
-                  <button 
+                  <button
                     className="edit-btn"
                     onClick={() => handleEditQuestion(question)}
                   >
                     ✏️ Edit
                   </button>
-                  <button 
+                  <button
                     className="delete-btn"
                     onClick={() => handleDeleteQuestion(question.id)}
                   >

@@ -31,13 +31,13 @@ const QuestionnaireAssembler = ({ sections, questionnaires, setQuestionnaires })
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (!formData.title.trim()) {
       alert('Questionnaire title is required!');
       return;
     }
 
-    if (formData.selectedSections.length === 0) {
+    if ((formData.selectedSections || []).length === 0) {
       alert('Please select at least one section for the questionnaire!');
       return;
     }
@@ -47,14 +47,14 @@ const QuestionnaireAssembler = ({ sections, questionnaires, setQuestionnaires })
       const updatedQuestionnaire = {
         ...editingQuestionnaire,
         ...formData,
-        sections: sections.filter(s => formData.selectedSections.includes(s.id)),
+        sections: (sections || []).filter(s => (formData.selectedSections || []).includes(s.id)),
         updatedAt: new Date().toISOString()
       };
 
-      setQuestionnaires(prev => prev.map(q => 
+      setQuestionnaires(prev => (prev || []).map(q =>
         q.id === editingQuestionnaire.id ? updatedQuestionnaire : q
       ));
-      
+
       // Reset form and edit mode
       handleCancelEdit();
     } else {
@@ -62,11 +62,11 @@ const QuestionnaireAssembler = ({ sections, questionnaires, setQuestionnaires })
       const newQuestionnaire = {
         id: Date.now().toString(),
         ...formData,
-        sections: sections.filter(s => formData.selectedSections.includes(s.id)),
+        sections: (sections || []).filter(s => (formData.selectedSections || []).includes(s.id)),
         createdAt: new Date().toISOString()
       };
 
-      setQuestionnaires(prev => [...prev, newQuestionnaire]);
+      setQuestionnaires(prev => [...(prev || []), newQuestionnaire]);
       setFormData({
         title: '',
         version: '1.0',
@@ -83,7 +83,7 @@ const QuestionnaireAssembler = ({ sections, questionnaires, setQuestionnaires })
       title: questionnaire.title,
       version: questionnaire.version,
       description: questionnaire.description,
-      selectedSections: questionnaire.sections.map(s => s.id)
+      selectedSections: (questionnaire.sections || []).map(s => s.id)
     });
     setIsEditMode(true);
     setShowForm(true);
@@ -102,7 +102,7 @@ const QuestionnaireAssembler = ({ sections, questionnaires, setQuestionnaires })
   };
 
   const handleDeleteQuestionnaire = (questionnaireId) => {
-    setQuestionnaires(prev => prev.filter(q => q.id !== questionnaireId));
+    setQuestionnaires(prev => (prev || []).filter(q => q.id !== questionnaireId));
   };
 
   return (
@@ -113,7 +113,7 @@ const QuestionnaireAssembler = ({ sections, questionnaires, setQuestionnaires })
       </div>
 
       {!showForm ? (
-        <button 
+        <button
           onClick={() => setShowForm(true)}
           style={{
             width: '100%',
@@ -139,7 +139,7 @@ const QuestionnaireAssembler = ({ sections, questionnaires, setQuestionnaires })
           marginBottom: '30px'
         }}>
           <h3>{isEditMode ? 'Edit Questionnaire' : 'New Questionnaire'}</h3>
-          
+
           <div style={{ marginBottom: '20px' }}>
             <label>Title *</label>
             <input
@@ -207,12 +207,12 @@ const QuestionnaireAssembler = ({ sections, questionnaires, setQuestionnaires })
               padding: '15px',
               background: 'white'
             }}>
-              {sections.length === 0 ? (
+              {(sections || []).length === 0 ? (
                 <p style={{ color: '#6b7280', textAlign: 'center' }}>
                   No sections available. Create sections first to build questionnaires.
                 </p>
               ) : (
-                sections.map(section => (
+                (sections || []).map(section => (
                   <div
                     key={section.id}
                     style={{
@@ -228,7 +228,7 @@ const QuestionnaireAssembler = ({ sections, questionnaires, setQuestionnaires })
                   >
                     <div style={{ fontWeight: '600', marginBottom: '5px' }}>{section.title}</div>
                     <div style={{ fontSize: '0.9rem', color: '#6b7280' }}>
-                      {section.questions.length} questions • Weight: {section.weight}
+                      {(section.questions || []).length} questions • Weight: {section.weight}
                     </div>
                   </div>
                 ))
@@ -255,12 +255,12 @@ const QuestionnaireAssembler = ({ sections, questionnaires, setQuestionnaires })
       )}
 
       <div style={{ textAlign: 'center' }}>
-        <h3>Created Questionnaires ({questionnaires.length})</h3>
-        {questionnaires.length === 0 ? (
+        <h3>Created Questionnaires ({(questionnaires || []).length})</h3>
+        {(questionnaires || []).length === 0 ? (
           <p>No questionnaires created yet.</p>
         ) : (
           <div style={{ display: 'grid', gap: '20px', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))' }}>
-            {questionnaires.map(q => (
+            {(questionnaires || []).map(q => (
               <div key={q.id} style={{
                 background: 'white',
                 padding: '20px',
@@ -270,18 +270,18 @@ const QuestionnaireAssembler = ({ sections, questionnaires, setQuestionnaires })
               }}>
                 <h4>{q.title}</h4>
                 <p>Version: {q.version}</p>
-                <p>Sections: {q.sections.length}</p>
+                <p>Sections: {(q.sections || []).length}</p>
                 {q.description && <p>{q.description}</p>}
-                
-                <div style={{ 
-                  display: 'flex', 
-                  gap: '10px', 
-                  justifyContent: 'flex-end', 
+
+                <div style={{
+                  display: 'flex',
+                  gap: '10px',
+                  justifyContent: 'flex-end',
                   marginTop: '15px',
                   paddingTop: '15px',
                   borderTop: '1px solid #f3f4f6'
                 }}>
-                  <button 
+                  <button
                     onClick={() => handleEditQuestionnaire(q)}
                     style={{
                       background: '#f0f9ff',
@@ -295,7 +295,7 @@ const QuestionnaireAssembler = ({ sections, questionnaires, setQuestionnaires })
                   >
                     ✏️ Edit
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleDeleteQuestionnaire(q.id)}
                     style={{
                       background: '#fef2f2',
