@@ -34,6 +34,7 @@ import {
   Logout as LogoutIcon,
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
+  Assignment as AssignmentIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -75,9 +76,9 @@ const Layout = ({ children }) => {
       badge: null,
     },
     {
-      text: 'Questionnaire Builder',
+      text: 'Questionnaire',
       icon: <BuildIcon />,
-      path: '/builder',
+      path: '/questionnaire',
       badge: null,
     },
     {
@@ -90,6 +91,12 @@ const Layout = ({ children }) => {
       text: 'Sections',
       icon: <SectionIcon />,
       path: '/sections',
+      badge: null,
+    },
+    {
+      text: 'Questionnaires',
+      icon: <AssignmentIcon />,
+      path: '/questionnaires',
       badge: null,
     },
     {
@@ -194,7 +201,7 @@ const Layout = ({ children }) => {
           >
             <MenuIcon />
           </IconButton>
-          
+
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
             {navigationItems.find(item => item.path === location.pathname)?.text || 'Tech Audit'}
           </Typography>
@@ -283,7 +290,7 @@ const Layout = ({ children }) => {
         >
           {drawer}
         </Drawer>
-        
+
         {/* Desktop drawer */}
         <Drawer
           variant="permanent"

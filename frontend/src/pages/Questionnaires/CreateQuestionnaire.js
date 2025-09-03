@@ -6,6 +6,10 @@ import {
     Paper,
     TextField,
     Button,
+    Stepper,
+    Step,
+    StepLabel,
+    StepContent,
     Card,
     CardContent,
     CardActions,
@@ -27,14 +31,8 @@ import {
     Accordion,
     AccordionSummary,
     AccordionDetails,
-    Stepper,
-    Step,
-    StepLabel,
-    StepContent,
     Badge,
-    Tooltip,
-    LinearProgress,
-    Avatar
+    Tooltip
 } from '@mui/material';
 import {
     NavigateNext as NextIcon,
@@ -44,16 +42,11 @@ import {
     Visibility as ViewIcon,
     Add as AddIcon,
     Save as SaveIcon,
-    ArrowBack as BackIcon,
-    Assignment as AssignmentIcon,
-    ViewList as SectionIcon,
-    Preview as PreviewIcon,
-    Build as BuildIcon
+    ArrowBack as BackIcon
 } from '@mui/icons-material';
 import dataPersistenceService from '../../services/dataPersistenceService';
-import Layout from '../Layout/Layout';
 
-const QuestionnaireBuilder = () => {
+const CreateQuestionnaire = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const isEditMode = location.state?.questionnaire;
@@ -74,7 +67,6 @@ const QuestionnaireBuilder = () => {
     const [questions, setQuestions] = useState([]);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
     const [previewMode, setPreviewMode] = useState(false);
-    const [loading, setLoading] = useState(false);
 
     // Load data on component mount
     useEffect(() => {
@@ -92,7 +84,6 @@ const QuestionnaireBuilder = () => {
 
     const loadData = () => {
         try {
-            setLoading(true);
             const persistedSections = dataPersistenceService.loadSections();
             const persistedQuestions = dataPersistenceService.loadQuestions();
 
@@ -107,26 +98,21 @@ const QuestionnaireBuilder = () => {
         } catch (err) {
             console.error('❌ Error loading data:', err);
             showSnackbar('Error loading data', 'error');
-        } finally {
-            setLoading(false);
         }
     };
 
     const steps = [
         {
             label: 'Basic Information',
-            description: 'Set questionnaire name, version, and description',
-            icon: <AssignmentIcon />
+            description: 'Set questionnaire name, version, and description'
         },
         {
             label: 'Select Sections',
-            description: 'Choose sections to include in the questionnaire',
-            icon: <SectionIcon />
+            description: 'Choose sections to include in the questionnaire'
         },
         {
             label: 'Review & Save',
-            description: 'Review the questionnaire and save it',
-            icon: <PreviewIcon />
+            description: 'Review the questionnaire and save it'
         }
     ];
 
@@ -193,7 +179,7 @@ const QuestionnaireBuilder = () => {
 
             // Navigate back to questionnaires list
             setTimeout(() => {
-                navigate('/questionnaire');
+                navigate('/questionnaires');
             }, 1500);
 
         } catch (err) {
@@ -238,13 +224,9 @@ const QuestionnaireBuilder = () => {
         }
     };
 
-    const getStepProgress = () => {
-        return ((activeStep + 1) / steps.length) * 100;
-    };
-
     const renderBasicInfoStep = () => (
-        <Box sx={{ p: 3 }}>
-            <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
+        <Box sx={{ p: 2 }}>
+            <Typography variant="h6" gutterBottom>
                 Questionnaire Details
             </Typography>
             <Grid container spacing={3}>
@@ -257,7 +239,6 @@ const QuestionnaireBuilder = () => {
                         placeholder="e.g., Security Audit Questionnaire 2024"
                         required
                         helperText="Enter a descriptive name for the questionnaire"
-                        variant="outlined"
                     />
                 </Grid>
                 <Grid item xs={12} md={6}>
@@ -269,7 +250,6 @@ const QuestionnaireBuilder = () => {
                         placeholder="e.g., 1.0, 2.1"
                         required
                         helperText="Version number for tracking changes"
-                        variant="outlined"
                     />
                 </Grid>
                 <Grid item xs={12}>
@@ -282,7 +262,6 @@ const QuestionnaireBuilder = () => {
                         multiline
                         rows={4}
                         helperText="Provide a detailed description of what this questionnaire covers"
-                        variant="outlined"
                     />
                 </Grid>
                 <Grid item xs={12} md={6}>
@@ -304,92 +283,77 @@ const QuestionnaireBuilder = () => {
     );
 
     const renderSectionSelectionStep = () => (
-        <Box sx={{ p: 3 }}>
-            <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
+        <Box sx={{ p: 2 }}>
+            <Typography variant="h6" gutterBottom>
                 Select Sections
             </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
                 Choose the sections you want to include in this questionnaire. You can select multiple sections.
             </Typography>
 
-            {loading ? (
-                <Box sx={{ textAlign: 'center', py: 4 }}>
-                    <LinearProgress sx={{ mb: 2 }} />
-                    <Typography>Loading sections...</Typography>
-                </Box>
-            ) : sections.length === 0 ? (
-                <Alert severity="info" sx={{ mb: 3 }}>
+            {sections.length === 0 ? (
+                <Alert severity="info">
                     No active sections found. Please create some sections first.
                 </Alert>
             ) : (
-                <Grid container spacing={2}>
+                <List>
                     {sections.map((section) => (
-                        <Grid item xs={12} md={6} key={section.id}>
-                            <Card
-                                variant="outlined"
-                                sx={{
-                                    cursor: 'pointer',
-                                    border: formData.selectedSections.includes(section.id) ? 2 : 1,
-                                    borderColor: formData.selectedSections.includes(section.id) ? 'primary.main' : 'divider',
-                                    bgcolor: formData.selectedSections.includes(section.id) ? 'primary.50' : 'background.paper',
-                                    '&:hover': {
-                                        borderColor: 'primary.main',
-                                        bgcolor: 'primary.50'
+                        <React.Fragment key={section.id}>
+                            <ListItem>
+                                <ListItemSecondaryAction>
+                                    <Checkbox
+                                        edge="end"
+                                        checked={formData.selectedSections.includes(section.id)}
+                                        onChange={() => handleSectionToggle(section.id)}
+                                    />
+                                </ListItemSecondaryAction>
+                                <ListItemText
+                                    primary={
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                                                {section.title}
+                                            </Typography>
+                                            <Chip
+                                                size="small"
+                                                label={`${section.questionCount} questions`}
+                                                color="primary"
+                                                variant="outlined"
+                                            />
+                                            <Chip
+                                                size="small"
+                                                label={section.priority}
+                                                color={
+                                                    section.priority === 'Critical' ? 'error' :
+                                                        section.priority === 'High' ? 'warning' : 'default'
+                                                }
+                                            />
+                                        </Box>
                                     }
-                                }}
-                                onClick={() => handleSectionToggle(section.id)}
-                            >
-                                <CardContent>
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                                        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                                            {section.title}
+                                    secondary={
+                                        <Typography variant="body2" color="text.secondary">
+                                            {section.description}
                                         </Typography>
-                                        <Checkbox
-                                            checked={formData.selectedSections.includes(section.id)}
-                                            color="primary"
-                                            size="small"
-                                        />
-                                    </Box>
-                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                                        {section.description}
-                                    </Typography>
-                                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                                        <Chip
-                                            size="small"
-                                            label={`${section.questionCount} questions`}
-                                            color="primary"
-                                            variant="outlined"
-                                        />
-                                        <Chip
-                                            size="small"
-                                            label={section.priority}
-                                            color={
-                                                section.priority === 'Critical' ? 'error' :
-                                                    section.priority === 'High' ? 'warning' : 'default'
-                                            }
-                                        />
-                                    </Box>
-                                </CardContent>
-                            </Card>
-                        </Grid>
+                                    }
+                                />
+                            </ListItem>
+                            <Divider />
+                        </React.Fragment>
                     ))}
-                </Grid>
+                </List>
             )}
 
             {formData.selectedSections.length > 0 && (
-                <Alert severity="success" sx={{ mt: 3 }}>
-                    <Typography variant="body2">
-                        Selected <strong>{formData.selectedSections.length}</strong> section(s) with <strong>{getTotalQuestionCount()}</strong> total questions
-                    </Typography>
+                <Alert severity="info" sx={{ mt: 2 }}>
+                    Selected {formData.selectedSections.length} section(s) with {getTotalQuestionCount()} total questions
                 </Alert>
             )}
         </Box>
     );
 
     const renderReviewStep = () => (
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ p: 2 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
+                <Typography variant="h6">
                     Review Questionnaire
                 </Typography>
                 <Button
@@ -401,15 +365,15 @@ const QuestionnaireBuilder = () => {
                 </Button>
             </Box>
 
-            <Card sx={{ mb: 3, bgcolor: 'primary.50' }}>
+            <Card sx={{ mb: 3 }}>
                 <CardContent>
-                    <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
                         {formData.name}
                     </Typography>
-                    <Typography variant="h6" color="text.secondary" gutterBottom>
+                    <Typography variant="subtitle1" color="text.secondary" gutterBottom>
                         Version {formData.version}
                     </Typography>
-                    <Typography variant="body1" sx={{ mb: 3 }}>
+                    <Typography variant="body1" sx={{ mb: 2 }}>
                         {formData.description}
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
@@ -484,190 +448,84 @@ const QuestionnaireBuilder = () => {
     };
 
     return (
-        <Layout>
-            <Box sx={{ flexGrow: 1 }}>
-                {/* Header */}
-                <Box sx={{ mb: 4 }}>
-                    <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
+        <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
+            {/* Header */}
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                <IconButton onClick={() => navigate('/questionnaires')} sx={{ mr: 2 }}>
+                    <BackIcon />
+                </IconButton>
+                <Box>
+                    <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold' }}>
                         {isEditMode ? 'Edit Questionnaire' : 'Create Questionnaire'}
                     </Typography>
                     <Typography variant="body1" color="text.secondary">
                         {isEditMode ? 'Update questionnaire details and sections' : 'Build a new audit questionnaire'}
                     </Typography>
                 </Box>
-
-                {/* Stats Cards */}
-                <Grid container spacing={3} sx={{ mb: 4 }}>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <Card sx={{ height: '100%' }}>
-                            <CardContent>
-                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                    <Avatar sx={{ bgcolor: 'primary.main', mr: 2 }}>
-                                        <AssignmentIcon />
-                                    </Avatar>
-                                    <Box>
-                                        <Typography variant="h4" component="div" sx={{ fontWeight: 'bold' }}>
-                                            {formData.selectedSections.length}
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            Selected Sections
-                                        </Typography>
-                                    </Box>
-                                </Box>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <Card sx={{ height: '100%' }}>
-                            <CardContent>
-                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                    <Avatar sx={{ bgcolor: 'success.main', mr: 2 }}>
-                                        <CheckIcon />
-                                    </Avatar>
-                                    <Box>
-                                        <Typography variant="h4" component="div" sx={{ fontWeight: 'bold' }}>
-                                            {getTotalQuestionCount()}
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            Total Questions
-                                        </Typography>
-                                    </Box>
-                                </Box>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <Card sx={{ height: '100%' }}>
-                            <CardContent>
-                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                    <Avatar sx={{ bgcolor: 'info.main', mr: 2 }}>
-                                        <SectionIcon />
-                                    </Avatar>
-                                    <Box>
-                                        <Typography variant="h4" component="div" sx={{ fontWeight: 'bold' }}>
-                                            {sections.length}
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            Available Sections
-                                        </Typography>
-                                    </Box>
-                                </Box>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <Card sx={{ height: '100%' }}>
-                            <CardContent>
-                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                    <Avatar sx={{ bgcolor: 'warning.main', mr: 2 }}>
-                                        <BuildIcon />
-                                    </Avatar>
-                                    <Box>
-                                        <Typography variant="h4" component="div" sx={{ fontWeight: 'bold' }}>
-                                            {activeStep + 1}
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            Current Step
-                                        </Typography>
-                                    </Box>
-                                </Box>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-                </Grid>
-
-                {/* Progress Bar */}
-                <Paper sx={{ p: 2, mb: 3 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                        <Typography variant="h6" sx={{ mr: 2 }}>
-                            Progress
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                            Step {activeStep + 1} of {steps.length} - {Math.round(getStepProgress())}% Complete
-                        </Typography>
-                    </Box>
-                    <LinearProgress
-                        variant="determinate"
-                        value={getStepProgress()}
-                        sx={{ height: 8, borderRadius: 4 }}
-                    />
-                </Paper>
-
-                {/* Stepper */}
-                <Paper sx={{ p: 3, mb: 3 }}>
-                    <Stepper activeStep={activeStep} orientation="horizontal">
-                        {steps.map((step, index) => (
-                            <Step key={step.label}>
-                                <StepLabel
-                                    icon={
-                                        <Badge
-                                            badgeContent={index + 1}
-                                            color="primary"
-                                        >
-                                            {step.icon}
-                                        </Badge>
-                                    }
-                                >
-                                    <Box>
-                                        <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-                                            {step.label}
-                                        </Typography>
-                                        <Typography variant="caption" color="text.secondary">
-                                            {step.description}
-                                        </Typography>
-                                    </Box>
-                                </StepLabel>
-                            </Step>
-                        ))}
-                    </Stepper>
-                </Paper>
-
-                {/* Step Content */}
-                <Paper sx={{ mb: 3 }}>
-                    {renderStepContent()}
-                </Paper>
-
-                {/* Navigation */}
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Button
-                        variant="outlined"
-                        onClick={handleBack}
-                        disabled={activeStep === 0}
-                        startIcon={<PrevIcon />}
-                        size="large"
-                    >
-                        Back
-                    </Button>
-                    <Button
-                        variant="contained"
-                        onClick={handleNext}
-                        disabled={!canProceedToNext()}
-                        endIcon={activeStep === steps.length - 1 ? <SaveIcon /> : <NextIcon />}
-                        size="large"
-                    >
-                        {activeStep === steps.length - 1 ? 'Save Questionnaire' : 'Next'}
-                    </Button>
-                </Box>
-
-                {/* Snackbar */}
-                <Snackbar
-                    open={snackbar.open}
-                    autoHideDuration={6000}
-                    onClose={handleCloseSnackbar}
-                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                >
-                    <Alert
-                        onClose={handleCloseSnackbar}
-                        severity={snackbar.severity}
-                        sx={{ width: '100%' }}
-                    >
-                        {snackbar.message}
-                    </Alert>
-                </Snackbar>
             </Box>
-        </Layout>
+
+            {/* Stepper */}
+            <Paper sx={{ p: 3, mb: 3 }}>
+                <Stepper activeStep={activeStep} orientation="horizontal">
+                    {steps.map((step, index) => (
+                        <Step key={step.label}>
+                            <StepLabel>
+                                <Box>
+                                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                                        {step.label}
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                        {step.description}
+                                    </Typography>
+                                </Box>
+                            </StepLabel>
+                        </Step>
+                    ))}
+                </Stepper>
+            </Paper>
+
+            {/* Step Content */}
+            <Paper sx={{ mb: 3 }}>
+                {renderStepContent()}
+            </Paper>
+
+            {/* Navigation */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Button
+                    variant="outlined"
+                    onClick={handleBack}
+                    disabled={activeStep === 0}
+                    startIcon={<PrevIcon />}
+                >
+                    Back
+                </Button>
+                <Button
+                    variant="contained"
+                    onClick={handleNext}
+                    disabled={!canProceedToNext()}
+                    endIcon={activeStep === steps.length - 1 ? <SaveIcon /> : <NextIcon />}
+                >
+                    {activeStep === steps.length - 1 ? 'Save Questionnaire' : 'Next'}
+                </Button>
+            </Box>
+
+            {/* Snackbar */}
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={6000}
+                onClose={handleCloseSnackbar}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            >
+                <Alert
+                    onClose={handleCloseSnackbar}
+                    severity={snackbar.severity}
+                    sx={{ width: '100%' }}
+                >
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
+        </Box>
     );
 };
 
-export default QuestionnaireBuilder;
-
+export default CreateQuestionnaire;

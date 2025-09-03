@@ -107,8 +107,8 @@ const Technologies = () => {
     if (!technologies) return;
 
     let filtered = technologies.filter(technology => {
-      const matchesSearch = technology.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        technology.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = (technology.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (technology.description || '').toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesCategory = selectedCategory === 'all' || technology.category === selectedCategory;
 

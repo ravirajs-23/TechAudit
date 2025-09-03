@@ -118,11 +118,11 @@ const CreateSection = () => {
         const allQuestions = getAllQuestions();
         if (!questionSearch.trim()) return allQuestions;
 
-        const searchTerm = questionSearch.toLowerCase();
+        const searchTerm = (questionSearch || '').toLowerCase();
         return allQuestions.filter(question =>
-            question.text.toLowerCase().includes(searchTerm) ||
-            question.category.toLowerCase().includes(searchTerm) ||
-            question.tags.some(tag => tag.toLowerCase().includes(searchTerm))
+            (question.text || '').toLowerCase().includes(searchTerm) ||
+            (question.category || '').toLowerCase().includes(searchTerm) ||
+            (question.tags && Array.isArray(question.tags) && question.tags.some(tag => (tag || '').toLowerCase().includes(searchTerm)))
         );
     };
 

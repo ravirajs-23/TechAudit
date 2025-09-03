@@ -120,8 +120,8 @@ const Sections = () => {
 
   const filterSections = () => {
     let filtered = sections.filter(section => {
-      const matchesSearch = section.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        section.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = (section.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (section.description || '').toLowerCase().includes(searchTerm.toLowerCase());
 
 
 

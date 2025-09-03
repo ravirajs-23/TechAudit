@@ -134,11 +134,11 @@ const CreateTechnology = () => {
     const allQuestionnaires = getAvailableQuestionnaires();
     if (!questionnaireSearch.trim()) return allQuestionnaires;
 
-    const searchTerm = questionnaireSearch.toLowerCase();
+    const searchTerm = (questionnaireSearch || '').toLowerCase();
     return allQuestionnaires.filter(questionnaire =>
-      questionnaire.title.toLowerCase().includes(searchTerm) ||
-      questionnaire.description.toLowerCase().includes(searchTerm) ||
-      questionnaire.category.toLowerCase().includes(searchTerm)
+      (questionnaire.title || '').toLowerCase().includes(searchTerm) ||
+      (questionnaire.description || '').toLowerCase().includes(searchTerm) ||
+      (questionnaire.category || '').toLowerCase().includes(searchTerm)
     );
   };
 

@@ -5,12 +5,14 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import Dashboard from './pages/Dashboard/Dashboard';
-import QuestionnaireBuilder from './components/QuestionnaireBuilder/QuestionnaireBuilder';
+import QuestionnaireBuilder from './components/QuestionnaireBuilder/QuestionnaireBuilderNew';
 import Questions from './pages/Questions/Questions';
 import Sections from './pages/Sections/Sections';
 import CreateSection from './pages/Sections/CreateSection';
 import Technologies from './pages/Technologies/Technologies';
 import CreateTechnology from './pages/Technologies/CreateTechnology';
+import Questionnaires from './pages/Questionnaires/Questionnaires';
+import CreateQuestionnaire from './pages/Questionnaires/CreateQuestionnaire';
 import './index.css';
 import Layout from './components/Layout/Layout';
 
@@ -62,7 +64,15 @@ function App() {
               }
             />
             <Route
-              path="/builder"
+              path="/questionnaire"
+              element={
+                <ProtectedRoute>
+                  <Questionnaires />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/questionnaire/create"
               element={
                 <ProtectedRoute>
                   <QuestionnaireBuilder />
