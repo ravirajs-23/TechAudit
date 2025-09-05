@@ -1,4 +1,5 @@
 const QuestionRepository = require('../repositories/QuestionRepository');
+const AuditRepository = require('../repositories/AuditRepository');
 const QuestionService = require('./QuestionService');
 const AuthService = require('./AuthService');
 
@@ -20,6 +21,9 @@ class ServiceFactory {
     initializeRepositories() {
         // Question Repository
         this.repositories.set('questionRepository', new QuestionRepository());
+
+        // Audit Repository
+        this.repositories.set('auditRepository', new AuditRepository());
     }
 
     /**

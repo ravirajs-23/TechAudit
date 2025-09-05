@@ -16,15 +16,12 @@ import CreateQuestionnaire from './pages/Questionnaires/CreateQuestionnaire';
 import './index.css';
 import Layout from './components/Layout/Layout';
 
-// Placeholder components for other routes
-const Audits = () => (
-  <Layout>
-    <div style={{ padding: '2rem', textAlign: 'center' }}>
-      <h2>Audits Management</h2>
-      <p>This page will contain audit management functionality.</p>
-    </div>
-  </Layout>
-);
+import Audits from './pages/Audits/Audits';
+import CreateAudit from './pages/Audits/CreateAudit';
+import ViewAudit from './pages/Audits/ViewAudit';
+import EditAudit from './pages/Audits/EditAudit';
+import ExecuteAudit from './pages/Audits/ExecuteAudit';
+import AuditReport from './pages/Audits/AuditReport';
 
 const Profile = () => (
   <Layout>
@@ -124,6 +121,46 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Audits />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/audits/create"
+              element={
+                <ProtectedRoute>
+                  <CreateAudit />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/audits/:auditId/view"
+              element={
+                <ProtectedRoute>
+                  <ViewAudit />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/audits/:auditId/edit"
+              element={
+                <ProtectedRoute>
+                  <EditAudit />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/audits/:auditId/execute"
+              element={
+                <ProtectedRoute>
+                  <ExecuteAudit />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/audits/:auditId/report"
+              element={
+                <ProtectedRoute>
+                  <AuditReport />
                 </ProtectedRoute>
               }
             />

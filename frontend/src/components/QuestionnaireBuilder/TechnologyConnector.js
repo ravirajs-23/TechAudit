@@ -125,6 +125,23 @@ const TechnologyConnector = ({ questionnaires, technologies, setTechnologies }) 
     setTechnologies(prev => (prev || []).filter(t => t.id !== technologyId));
   };
 
+  // Helper function to render section names
+  const renderSectionNames = (questionnaire) => {
+    if (!questionnaire || !questionnaire.sections || questionnaire.sections.length === 0) {
+      return 'No sections defined';
+    }
+
+    return questionnaire.sections.map(section => section.title).join(', ');
+  };
+
+  // Helper function to get total questions count
+  const getTotalQuestions = (questionnaire) => {
+    if (!questionnaire || !questionnaire.sections) return 0;
+    return questionnaire.sections.reduce((total, section) => {
+      return total + (section.questions ? section.questions.length : 0);
+    }, 0);
+  };
+
   return (
     <div className="technology-connector">
       <div className="builder-header">
@@ -297,10 +314,57 @@ const TechnologyConnector = ({ questionnaires, technologies, setTechnologies }) 
               <option value="">Choose a questionnaire...</option>
               {(questionnaires || []).map(q => (
                 <option key={q.id} value={q.id}>
-                  {q.title} v{q.version} ({(q.sections || []).length} sections)
+                  {q.title} v{q.version} ({getTotalQuestions(q)} questions, {(q.sections || []).length} sections)
                 </option>
               ))}
             </select>
+
+            {/* Show selected questionnaire details */}
+            {formData.selectedQuestionnaire && (
+              <div style={{
+                marginTop: '10px',
+                padding: '15px',
+                background: '#f0f9ff',
+                borderRadius: '8px',
+                border: '1px solid #bae6fd'
+              }}>
+                <h4 style={{ margin: '0 0 10px 0', color: '#0369a1' }}>📋 Questionnaire Details:</h4>
+                {(() => {
+                  const selectedQ = (questionnaires || []).find(q => q.id === formData.selectedQuestionnaire);
+                  if (!selectedQ) return null;
+
+                  return (
+                    <div>
+                      <p><strong>Title:</strong> {selectedQ.title}</p>
+                      <p><strong>Description:</strong> {selectedQ.description}</p>
+                      <p><strong>Total Questions:</strong> {getTotalQuestions(selectedQ)}</p>
+                      <p><strong>Sections ({selectedQ.sections?.length || 0}):</strong></p>
+                      <div style={{ marginLeft: '20px' }}>
+                        {selectedQ.sections && selectedQ.sections.length > 0 ? (
+                          selectedQ.sections.map((section, index) => (
+                            <div key={section.id || index} style={{
+                              padding: '8px',
+                              margin: '5px 0',
+                              background: 'white',
+                              borderRadius: '6px',
+                              border: '1px solid #e2e8f0'
+                            }}>
+                              <strong>📑 {section.title}</strong>
+                              <br />
+                              <small style={{ color: '#64748b' }}>
+                                {section.description} ({section.questions ? section.questions.length : 0} questions)
+                              </small>
+                            </div>
+                          ))
+                        ) : (
+                          <p style={{ color: '#64748b', fontStyle: 'italic' }}>No sections defined</p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
           </div>
 
           <div style={{ display: 'flex', gap: '15px', justifyContent: 'flex-end' }}>
@@ -339,7 +403,47 @@ const TechnologyConnector = ({ questionnaires, technologies, setTechnologies }) 
                 <p>Vendor: {tech.vendor}</p>
                 <p>Category: {tech.category}</p>
                 <p>Risk Level: {tech.riskLevel}</p>
-                <p>Questionnaire: {tech.questionnaire?.title}</p>
+                <p><strong>Questionnaire:</strong> {tech.questionnaire?.title}</p>
+
+                {/* Show sections information */}
+                {tech.questionnaire && (
+                  <div style={{
+                    marginTop: '10px',
+                    padding: '10px',
+                    background: '#f8fafc',
+                    borderRadius: '8px',
+                    border: '1px solid #e2e8f0'
+                  }}>
+                    <p style={{ margin: '0 0 8px 0', fontWeight: '600', color: '#374151' }}>
+                      📋 Sections ({tech.questionnaire.sections?.length || 0}):
+                    </p>
+                    <div style={{ fontSize: '0.9rem' }}>
+                      {tech.questionnaire.sections && tech.questionnaire.sections.length > 0 ? (
+                        tech.questionnaire.sections.map((section, index) => (
+                          <div key={section.id || index} style={{
+                            padding: '6px 8px',
+                            margin: '3px 0',
+                            background: 'white',
+                            borderRadius: '4px',
+                            border: '1px solid #d1d5db',
+                            fontSize: '0.85rem'
+                          }}>
+                            <strong>📑 {section.title}</strong>
+                            <br />
+                            <small style={{ color: '#6b7280' }}>
+                              {section.questions ? section.questions.length : 0} questions
+                            </small>
+                          </div>
+                        ))
+                      ) : (
+                        <p style={{ color: '#6b7280', fontStyle: 'italic', fontSize: '0.85rem' }}>
+                          No sections defined
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {tech.description && <p>{tech.description}</p>}
 
                 <div style={{

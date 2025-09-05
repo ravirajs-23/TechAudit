@@ -494,6 +494,75 @@ const options = {
               description: 'Questionnaire ID'
             }
           }
+        },
+        Audit: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+              description: 'Unique audit identifier'
+            },
+            projectId: {
+              type: 'string',
+              description: 'ID of the project being audited'
+            },
+            leadAuditorId: {
+              type: 'string',
+              description: 'ID of the lead auditor'
+            },
+            teamMembers: {
+              type: 'array',
+              items: {
+                type: 'string'
+              },
+              description: 'Array of team member user IDs'
+            },
+            status: {
+              type: 'string',
+              enum: ['planning', 'in-progress', 'review', 'completed', 'cancelled'],
+              description: 'Current status of the audit'
+            },
+            startDate: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Audit start date'
+            },
+            completionDate: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Audit completion date'
+            },
+            overallScore: {
+              type: 'number',
+              minimum: 0,
+              maximum: 100,
+              description: 'Overall audit score (0-100)'
+            },
+            durationInDays: {
+              type: 'number',
+              description: 'Calculated duration of the audit in days'
+            },
+            isOverdue: {
+              type: 'boolean',
+              description: 'Whether the audit is overdue'
+            },
+            progressPercentage: {
+              type: 'number',
+              minimum: 0,
+              maximum: 100,
+              description: 'Progress percentage based on status'
+            },
+            createdAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Audit creation timestamp'
+            },
+            updatedAt: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Last update timestamp'
+            }
+          }
         }
       }
     },
@@ -529,6 +598,10 @@ const options = {
       {
         name: 'Utilities',
         description: 'Utility endpoints for retrieving complete data structures'
+      },
+      {
+        name: 'Audits',
+        description: 'Audit management endpoints for creating, managing, and tracking technology audits'
       }
     ]
   },

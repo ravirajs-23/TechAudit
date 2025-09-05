@@ -7,6 +7,7 @@ require('dotenv').config();
 const connectDB = require('./infrastructure/database/connection');
 const authRoutes = require('./presentation/routes/authRoutes');
 const questionnaireRoutes = require('./presentation/routes/questionnaireRoutes');
+const auditRoutes = require('./presentation/routes/auditRoutes');
 const errorHandler = require('./presentation/middleware/errorHandler');
 
 // Swagger documentation
@@ -33,6 +34,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api', questionnaireRoutes);
+app.use('/api/audits', auditRoutes);
 
 /**
  * @swagger

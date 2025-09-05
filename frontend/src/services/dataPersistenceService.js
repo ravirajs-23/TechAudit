@@ -9,7 +9,10 @@ class DataPersistenceService {
             sections: 'techaudit_sections',
             technologies: 'techaudit_technologies',
             questionnaires: 'techaudit_questionnaires',
-            audits: 'techaudit_audits'
+            projects: 'techaudit_projects',
+            auditors: 'techaudit_auditors',
+            audits: 'techaudit_audits',
+            auditAnswers: 'techaudit_audit_answers'
         };
     }
 
@@ -221,6 +224,94 @@ class DataPersistenceService {
         return true;
     }
 
+    // Projects persistence
+    saveProjects(projects) {
+        return this.saveData(this.storageKeys.projects, projects);
+    }
+
+    loadProjects() {
+        return this.loadData(this.storageKeys.projects, []);
+    }
+
+    addProject(project) {
+        const projects = this.loadProjects();
+        const newProject = {
+            ...project,
+            id: this.generateId(projects),
+            createdAt: new Date().toISOString().split('T')[0],
+            lastModified: new Date().toISOString().split('T')[0]
+        };
+        projects.push(newProject);
+        this.saveProjects(projects);
+        return newProject;
+    }
+
+    updateProject(projectId, updatedData) {
+        const projects = this.loadProjects();
+        const index = projects.findIndex(p => p.id === projectId);
+        if (index !== -1) {
+            projects[index] = {
+                ...projects[index],
+                ...updatedData,
+                lastModified: new Date().toISOString().split('T')[0]
+            };
+            this.saveProjects(projects);
+            return projects[index];
+        }
+        return null;
+    }
+
+    deleteProject(projectId) {
+        const projects = this.loadProjects();
+        const filtered = projects.filter(p => p.id !== projectId);
+        this.saveProjects(filtered);
+        return true;
+    }
+
+    // Auditors persistence
+    saveAuditors(auditors) {
+        return this.saveData(this.storageKeys.auditors, auditors);
+    }
+
+    loadAuditors() {
+        return this.loadData(this.storageKeys.auditors, []);
+    }
+
+    addAuditor(auditor) {
+        const auditors = this.loadAuditors();
+        const newAuditor = {
+            ...auditor,
+            id: this.generateId(auditors),
+            createdAt: new Date().toISOString().split('T')[0],
+            lastModified: new Date().toISOString().split('T')[0]
+        };
+        auditors.push(newAuditor);
+        this.saveAuditors(auditors);
+        return newAuditor;
+    }
+
+    updateAuditor(auditorId, updatedData) {
+        const auditors = this.loadAuditors();
+        const index = auditors.findIndex(a => a.id === auditorId);
+        if (index !== -1) {
+            auditors[index] = {
+                ...auditors[index],
+                ...updatedData,
+                lastModified: new Date().toISOString().split('T')[0]
+            };
+            this.saveAuditors(auditors);
+            return auditors[index];
+        }
+        return null;
+    }
+
+    deleteAuditor(auditorId) {
+        const auditors = this.loadAuditors();
+        const filtered = auditors.filter(a => a.id !== auditorId);
+        this.saveAuditors(filtered);
+        return true;
+    }
+
     // Audits persistence
     saveAudits(audits) {
         return this.saveData(this.storageKeys.audits, audits);
@@ -265,6 +356,43 @@ class DataPersistenceService {
         return true;
     }
 
+    // Audit Answers persistence
+    saveAuditAnswers(auditData) {
+        const allAnswers = this.loadAllAuditAnswers();
+        const existingIndex = allAnswers.findIndex(a => a.auditId === auditData.auditId);
+
+        if (existingIndex !== -1) {
+            allAnswers[existingIndex] = {
+                ...allAnswers[existingIndex],
+                ...auditData,
+                lastModified: new Date().toISOString()
+            };
+        } else {
+            allAnswers.push({
+                ...auditData,
+                createdAt: new Date().toISOString(),
+                lastModified: new Date().toISOString()
+            });
+        }
+
+        return this.saveData(this.storageKeys.auditAnswers, allAnswers);
+    }
+
+    loadAuditAnswers(auditId) {
+        const allAnswers = this.loadAllAuditAnswers();
+        return allAnswers.find(a => a.auditId === auditId) || null;
+    }
+
+    loadAllAuditAnswers() {
+        return this.loadData(this.storageKeys.auditAnswers, []);
+    }
+
+    deleteAuditAnswers(auditId) {
+        const allAnswers = this.loadAllAuditAnswers();
+        const filtered = allAnswers.filter(a => a.auditId !== auditId);
+        return this.saveData(this.storageKeys.auditAnswers, filtered);
+    }
+
     // Utility methods
     generateId(items) {
         if (items.length === 0) return 1;
@@ -280,12 +408,18 @@ class DataPersistenceService {
             const { sectionsData } = require('../data/sectionsData');
             const { technologiesData } = require('../data/technologiesData');
             const { questionnairesData } = require('../data/questionnairesData');
+            const { projectsData } = require('../data/projectsData');
+            const { auditorsData } = require('../data/auditorsData');
+            const { auditsData } = require('../data/auditsData');
 
             console.log('🔍 Checking localStorage for initialization...');
             console.log('🔍 Questions in storage:', this.loadQuestions().length);
             console.log('🔍 Sections in storage:', this.loadSections().length);
             console.log('🔍 Technologies in storage:', this.loadTechnologies().length);
             console.log('🔍 Questionnaires in storage:', this.loadQuestionnaires().length);
+            console.log('🔍 Projects in storage:', this.loadProjects().length);
+            console.log('🔍 Auditors in storage:', this.loadAuditors().length);
+            console.log('🔍 Audits in storage:', this.loadAudits().length);
 
             // Only initialize if storage is empty
             if (this.loadQuestions().length === 0) {
@@ -307,8 +441,36 @@ class DataPersistenceService {
                 this.saveQuestionnaires(questionnairesData);
                 console.log('✅ Initialized questionnaires with default data');
             }
+
+            if (this.loadProjects().length === 0) {
+                this.saveProjects(projectsData);
+                console.log('✅ Initialized projects with default data');
+            }
+
+            if (this.loadAuditors().length === 0) {
+                this.saveAuditors(auditorsData);
+                console.log('✅ Initialized auditors with default data');
+            }
+
+            if (this.loadAudits().length === 0) {
+                this.saveAudits(auditsData);
+                console.log('✅ Initialized audits with default data');
+            }
         } catch (error) {
             console.error('❌ Error during initialization:', error);
+        }
+    }
+
+    // Force initialize audit data (for testing)
+    forceInitializeAudits() {
+        try {
+            const { auditsData } = require('../data/auditsData');
+            this.saveAudits(auditsData);
+            console.log('✅ Force initialized audits with sample data');
+            return true;
+        } catch (error) {
+            console.error('❌ Error force initializing audits:', error);
+            return false;
         }
     }
 

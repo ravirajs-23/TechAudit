@@ -56,26 +56,111 @@ code {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* Navigation active state */
+/* Enhanced Navigation Styles */
+.MuiListItemButton-root {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 12px;
+  margin: 4px 8px;
+}
+
+.MuiListItemButton-root:hover {
+  transform: translateX(4px);
+  background-color: rgba(25, 118, 210, 0.08);
+}
+
 .MuiListItemButton-root.Mui-selected {
   background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
   color: white;
-  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.3);
+  box-shadow: 0 4px 16px rgba(25, 118, 210, 0.3);
+  transform: translateX(6px);
 }
 
 .MuiListItemButton-root.Mui-selected:hover {
   background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
+  transform: translateX(8px);
 }
 
-/* App bar shadow */
+/* Modern App Bar */
 .MuiAppBar-root {
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
 }
 
-/* Drawer styling */
+/* Enhanced Drawer */
 .MuiDrawer-paper {
-  border-right: 1px solid rgba(0, 0, 0, 0.08);
+  border-right: none;
   background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+  box-shadow: 0 0 32px rgba(0, 0, 0, 0.08);
+}
+
+/* Navigation Section Headers */
+.nav-section-header {
+  background: rgba(0, 0, 0, 0.02);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.nav-section-header:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* Badge Enhancements */
+.MuiBadge-badge {
+  font-weight: bold;
+  font-size: 0.7rem;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Avatar Enhancements */
+.MuiAvatar-root {
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.MuiAvatar-root:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* Menu Enhancements */
+.MuiMenu-paper {
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(10px);
+}
+
+.MuiMenuItem-root {
+  transition: all 0.2s ease;
+  border-radius: 8px;
+  margin: 4px 8px;
+}
+
+.MuiMenuItem-root:hover {
+  background-color: rgba(25, 118, 210, 0.08);
+  transform: translateX(4px);
+}
+
+/* Tooltip Enhancements */
+.MuiTooltip-tooltip {
+  background: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 8px;
+  font-weight: 500;
 }
 
 /* Dashboard stats cards */
