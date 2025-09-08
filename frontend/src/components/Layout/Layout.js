@@ -8,21 +8,18 @@ import {
   Menu,
   MenuItem,
   Avatar,
-  Button,
   Drawer,
   List,
   ListItem,
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Divider,
   Container,
   Badge,
   Tooltip,
   Collapse,
   Chip,
   Fade,
-  Slide,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -30,20 +27,16 @@ import {
   Assessment as AssessmentIcon,
   QuestionAnswer as QuestionIcon,
   ViewList as SectionIcon,
-  Build as BuildIcon,
   Computer as TechnologyIcon,
   Person as PersonIcon,
   Settings as SettingsIcon,
   Notifications as NotificationsIcon,
   Logout as LogoutIcon,
-  ChevronLeft as ChevronLeftIcon,
-  ChevronRight as ChevronRightIcon,
   Assignment as AssignmentIcon,
   ExpandLess,
   ExpandMore,
   Security as SecurityIcon,
   Analytics as AnalyticsIcon,
-  FolderOpen as FolderIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -55,8 +48,9 @@ const Layout = ({ children }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
-    management: true,
-    audit: true,
+    overview: true,
+    management: false,
+    audit: false,
   });
   const { user, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
@@ -82,10 +76,23 @@ const Layout = ({ children }) => {
   };
 
   const handleSectionToggle = (section) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
+    setExpandedSections(prev => {
+      // If clicking on an already open section, close it
+      if (prev[section]) {
+        return {
+          overview: false,
+          management: false,
+          audit: false,
+        };
+      }
+      // Otherwise, close all sections and open the clicked one
+      return {
+        overview: false,
+        management: false,
+        audit: false,
+        [section]: true,
+      };
+    });
   };
 
   const navigationSections = [
@@ -195,7 +202,10 @@ const Layout = ({ children }) => {
       </Box>
 
       {/* Navigation Sections */}
-      <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+      <Box sx={{
+        flexGrow: 1,
+        overflow: 'hidden',
+      }}>
         {navigationSections.map((section) => (
           <Box key={section.id}>
             <ListItemButton
@@ -299,30 +309,6 @@ const Layout = ({ children }) => {
         ))}
       </Box>
 
-      {/* User Section - Simplified */}
-      <Box sx={{ borderTop: '1px solid rgba(0,0,0,0.08)', p: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Avatar
-            sx={{
-              width: 40,
-              height: 40,
-              bgcolor: 'primary.main',
-              fontWeight: 'bold',
-              fontSize: '1rem'
-            }}
-          >
-            {user?.firstName?.charAt(0) || user?.email?.charAt(0) || 'U'}
-          </Avatar>
-          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-            <Typography variant="body2" sx={{ fontWeight: 'bold', lineHeight: 1.2 }}>
-              {user?.firstName} {user?.lastName}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              {isAdmin ? 'Administrator' : 'Auditor'}
-            </Typography>
-          </Box>
-        </Box>
-      </Box>
     </Box>
   );
 

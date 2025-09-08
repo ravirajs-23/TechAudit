@@ -112,9 +112,6 @@ const Audits = () => {
         navigate(`/audits/${audit.id}/view`);
     };
 
-    const handleExecuteAudit = (audit) => {
-        navigate(`/audits/${audit.id}/execute`);
-    };
 
     const handleViewReport = (audit) => {
         navigate(`/audits/${audit.id}/report`);
@@ -434,28 +431,6 @@ const Audits = () => {
                                                             <DeleteIcon />
                                                         </IconButton>
                                                     </Tooltip>
-                                                    {audit.status === 'planning' && (
-                                                        <Tooltip title="Execute Audit">
-                                                            <IconButton
-                                                                size="small"
-                                                                onClick={() => handleExecuteAudit(audit)}
-                                                                sx={{ color: 'success.main' }}
-                                                            >
-                                                                <StartIcon />
-                                                            </IconButton>
-                                                        </Tooltip>
-                                                    )}
-                                                    {audit.status === 'in-progress' && (
-                                                        <Tooltip title="Continue Audit">
-                                                            <IconButton
-                                                                size="small"
-                                                                onClick={() => handleExecuteAudit(audit)}
-                                                                sx={{ color: 'warning.main' }}
-                                                            >
-                                                                <AssessmentIcon />
-                                                            </IconButton>
-                                                        </Tooltip>
-                                                    )}
                                                     {audit.status === 'completed' && (
                                                         <Tooltip title="View Report">
                                                             <IconButton

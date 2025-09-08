@@ -196,16 +196,6 @@ const ViewAudit = () => {
                             Start Audit
                         </Button>
                     )}
-                    {audit.status === 'in-progress' && (
-                        <Button
-                            variant="contained"
-                            color="warning"
-                            startIcon={<AssessmentIcon />}
-                            onClick={handleExecute}
-                        >
-                            Continue Audit
-                        </Button>
-                    )}
                     {audit.status === 'completed' && (
                         <Button
                             variant="contained"

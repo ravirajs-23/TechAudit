@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
     Box,
     Typography,
-    Paper,
     Button,
     TextField,
     Grid,
@@ -12,32 +11,18 @@ import {
     Select,
     MenuItem,
     Chip,
-    Avatar,
     Alert,
     CircularProgress,
     IconButton,
-    Tooltip,
     Card,
     CardContent,
-    Divider,
-    List,
-    ListItem,
-    ListItemText,
-    ListItemIcon,
     Snackbar
 } from '@mui/material';
 import {
     ArrowBack as BackIcon,
     Save as SaveIcon,
     Cancel as CancelIcon,
-    Assignment as AssignmentIcon,
-    Business as ProjectIcon,
-    Person as AuditorIcon,
-    Schedule as ScheduleIcon,
-    CheckCircle as CheckIcon,
-    Warning as WarningIcon,
-    Error as ErrorIcon,
-    Group as TeamIcon
+    Schedule as ScheduleIcon
 } from '@mui/icons-material';
 import dataPersistenceService from '../../services/dataPersistenceService';
 import Layout from '../../components/Layout/Layout';
